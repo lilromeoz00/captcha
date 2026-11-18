@@ -1,0 +1,12 @@
+# Core dependencies for the agent.
+# Only solver/detector.py imports torch/ultralytics; the decision core
+# (multiset.py, geometry.py) runs on stdlib + Pillow alone.
+
+torch>=2.0
+torchvision>=0.15
+ultralytics>=8.3.0
+pillow>=10.0
+numpy>=1.24
+
+# Optional, for the ablation plots planned for the Lesson 41 deliverable:
+# matplotlib>=3.7

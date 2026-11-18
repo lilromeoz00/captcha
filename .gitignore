@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Ultralytics writes these on first run
+yolo*.pt
+runs/
+*.cache
+datasets/
+
+# Scratch output from `python -m solver solve --annotate out.jpg`
+out.jpg
+
+# NOTE: reports/ IS committed on purpose -- demo_strip_0000.jpg and
+# eval_report.md are the checkpoint's evidence. Regenerate with:
+#   python -m solver solve data/strips/strip_0000.jpg --annotate reports/demo_strip_0000.jpg
+#   python -m solver eval --report reports/eval_report.md
+
+# Local noise
+.DS_Store
+Thumbs.db
+desktop.ini
