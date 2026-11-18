@@ -2,7 +2,7 @@
 
 **CS471 Final Project — Lesson 36 (Ugly but Functional)**
 
-**Repository:** https://github.com/`<your-username>`/`<your-repo>`  ·  **Tag:** `checkpoint`
+**Repository:** https://github.com/lilromeoz00/captcha  ·  **Submitted version:** https://github.com/lilromeoz00/captcha/tree/checkpoint
 
 ## What is complete
 
