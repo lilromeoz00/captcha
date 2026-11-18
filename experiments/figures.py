@@ -88,22 +88,14 @@ def fig_baselines(d):
         x, accs, yerr=[los, his], fmt="none", ecolor=INK, elinewidth=0.9, capsize=2.5
     )
     for xi, a in zip(x, accs):
-        ax.text(xi, a + 4.5, f"{a:.1f}%", ha="center", va="bottom", fontsize=7.6)
+        ax.text(xi, a + his[list(x).index(xi)] + 2.5, f"{a:.1f}%",
+                ha="center", va="bottom", fontsize=7.6)
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=6.9)
     ax.set_ylabel("task accuracy (%)")
     ax.set_ylim(0, 120)
-    ax.axhline(12.5, color=WARN, lw=0.8, ls="--")
-    ax.annotate(
-        "chance = 12.5%",
-        xy=(0.02, 12.5),
-        xycoords=("axes fraction", "data"),
-        xytext=(0.02, 30),
-        textcoords=("axes fraction", "data"),
-        color=WARN,
-        fontsize=6.8,
-        arrowprops=dict(arrowstyle="->", lw=0.6, color=WARN),
-    )
+    ax.axhline(12.5, color=WARN, lw=0.9, ls="--", label="chance rate (12.5%)")
+    ax.legend(frameon=False, fontsize=7, loc="upper left")
     ax.set_title("Baseline comparison on 48 hand-labelled challenges (95% Wilson CI)")
     fig.tight_layout()
     return _save(fig, "fig1_baselines.png")
@@ -258,7 +250,7 @@ def fig_robustness(d):
         if kind == "scale":
             ax.set_xlim(0.4, 0.85)
     axes[0].set_ylabel("accuracy (%)")
-    fig.suptitle("Robustness to sensor/transport degradation (48 strips)", fontsize=9, y=1.02)
+    fig.suptitle("Robustness to sensor and transport degradation (48 frames)", fontsize=9, y=1.02)
     fig.tight_layout()
     return _save(fig, "fig6_robustness.png")
 
@@ -300,12 +292,8 @@ def fig_penalty_sweep(d):
     ax.set_xlabel(r"miss penalty $\alpha$ (surplus $\beta=1$)")
     ax.set_ylabel("task accuracy (%)")
     ax.set_ylim(84, 104)
-    ax.set_title("Penalty ratio is not identifiable on this set", fontsize=8.2, color=WARN)
-    ax.text(
-        0.5, 0.90,
-        "accuracy invariant from 1:1 to 50:1; the evaluation set is saturated",
-        transform=ax.transAxes, ha="center", fontsize=6.2, color=WARN,
-    )
+    ax.set_title("Penalty ratio: accuracy invariant from 1:1 to 50:1",
+                 fontsize=8.2, color=WARN)
     return _save(fig, "fig8_penalty_sweep.png")
 
 
