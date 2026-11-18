@@ -15,10 +15,16 @@ datasets/
 # Scratch output from `python -m solver solve --annotate out.jpg`
 out.jpg
 
-# NOTE: reports/ IS committed on purpose -- demo_strip_0000.jpg and
-# eval_report.md are the checkpoint's evidence. Regenerate with:
-#   python -m solver solve data/strips/strip_0000.jpg --annotate reports/demo_strip_0000.jpg
-#   python -m solver eval --report reports/eval_report.md
+# NOTE: results/ and figures/ ARE committed on purpose. results/experiments.json
+# is the single source of truth for every number in the report, and figures/ holds
+# the rendered figures. Both regenerate with:
+#   python experiments/run_all.py && python experiments/figures.py
+
+# Intermediates that are not worth tracking
+results/detections_cache.json
+figures/_page*.png
+figures/_log.txt
+experiments/__pycache__/
 
 # Local noise
 .DS_Store

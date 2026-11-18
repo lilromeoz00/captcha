@@ -94,3 +94,40 @@ class VeggieDetector:
                 bag[cls] = bag.get(cls, 0) + 1
             bags.append(bag)
         return bags
+
+    def detect_boxes(self, crops: Sequence, conf: float | None = None) -> List[List[dict]]:
+        """Per-tile detections WITH geometry, for localisation metrics.
+
+        `detect()` deliberately throws the boxes away because the ranker only
+        needs counts. Evaluation needs the boxes back, so this is a separate
+        entry point rather than a flag on the hot path.
+        """
+        model = self._load()
+        if not crops:
+            return []
+        results = model.predict(
+            list(crops),
+            imgsz=self.imgsz,
+            conf=self.conf if conf is None else conf,
+            verbose=False,
+            device=self.device,
+        )
+        out: List[List[dict]] = []
+        for r in results:
+            boxes = []
+            for b in r.boxes:
+                ci = int(b.cls)
+                if not 0 <= ci < len(CLASSES):
+                    continue
+                x1, y1, x2, y2 = (float(v) for v in b.xyxy[0].tolist())
+                boxes.append(
+                    {
+                        "cls": CLASSES[ci],
+                        "cls_id": ci,
+                        "conf": float(b.conf),
+                        "box": (x1, y1, x2, y2),
+                    }
+                )
+            boxes.sort(key=lambda d: -d["conf"])
+            out.append(boxes)
+        return out

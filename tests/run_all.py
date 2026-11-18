@@ -21,9 +21,15 @@ def main(argv):
     fast = "--fast" in argv
     loader = unittest.TestLoader()
     if fast:
-        names = ["test_multiset", "test_geometry"]
+        names = ["test_multiset", "test_geometry", "test_experiments"]
     else:
-        names = ["test_multiset", "test_geometry", "test_detector", "test_end_to_end"]
+        names = [
+            "test_multiset",
+            "test_geometry",
+            "test_experiments",
+            "test_detector",
+            "test_end_to_end",
+        ]
     suite = loader.loadTestsFromNames(names)
     print(f"running {suite.countTestCases()} tests "
           f"({'fast: decision core only' if fast else 'full: includes real model'})\n")
