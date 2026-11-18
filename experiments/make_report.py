@@ -284,75 +284,76 @@ def build():
         # ------------------------------------------------------- abstract
         p.heading("Abstract")
         p.para(
-            "Collection against a defended target stops at the adversary's visual challenge layer, "
-            "not at its cryptography. The commercial answer to that layer is manual labour arbitrage: "
-            "roughly $2 per 1,000 solves, human-latency bound, and about 10% reliable because challenge "
-            "families rotate faster than workers retrain. We implement an agent that replaces this with a "
-            "local computation. The agent perceives eight candidate scenes and one grayscale silhouette "
-            "through a single-stage object detector, converts each into a class multiset, and applies an "
-            "asymmetric penalty that scores a candidate by how many key objects it fails to account for. "
-            "It abstains rather than guessing when the top two candidates tie. On 48 hand-labelled "
-            f"challenges the agent scores {ag['right']}/{ag['n']} ({pct(ag['accuracy'])}, Wilson 95% CI "
-            f"[{pct(ag['wilson_lo'])}, {pct(ag['wilson_hi'])}]), against a 12.5% chance floor and 25.0% for "
-            "the strongest baseline that omits the matching layer. We also report a result that does not "
-            "flatter the design: a symmetric 1:1 penalty scores identically, so the penalty asymmetry is "
-            "not identifiable on this evaluation set, and we say so."
+            "Access to defended network services is frequently limited by an interactive visual challenge "
+            "rather than by cryptographic controls. The prevailing commercial response distributes such "
+            "challenges to low-wage workers at approximately $2 per 1,000 items, with human-bound latency "
+            "and an approximate 10% success rate. This report describes an agent that replaces that process "
+            "with a local computation. A single-stage object detector processes eight candidate scenes and "
+            "one grayscale silhouette; each tile is reduced to a class multiset; candidates are ranked by an "
+            "asymmetric penalty that weights unaccounted key objects above surplus objects; and the agent "
+            "abstains when the two highest scores are equal. On 48 hand-labelled challenges the agent "
+            f"achieves {ag['right']}/{ag['n']} ({pct(ag['accuracy'])}, Wilson 95% CI "
+            f"[{pct(ag['wilson_lo'])}, {pct(ag['wilson_hi'])}]), against a 12.5% chance rate and 25.0% for "
+            "the strongest baseline lacking a matching stage. One result does not support the design: a "
+            "symmetric penalty achieves the same accuracy, so the asymmetry cannot be identified on this "
+            "evaluation set. That result is reported in Section 4.4."
         )
 
         # ------------------------------------------------------ section 1
         p.heading("1. Operational Problem and Objectives")
         p.para(
-            "In the modern age, data is gold. The most valuable data sits behind hard-to-reach places, and "
-            "to maintain an edge in cyberspace cyber operations need tooling that makes those barriers stop "
-            "existing. The most popular anti-collection technique in that space is the CAPTCHA; the hardest "
-            "and best-maintained member of that family is the FunCaptcha-class challenge. Today it is beaten "
-            "by shipping each challenge to a low-wage human worker."
+            "For data collection against defended network services, the limiting control is frequently an "
+            "interactive visual challenge rather than cryptography. The most widely deployed challenge family "
+            "of this kind presents an image and requires a correct interpretation before access is granted. "
+            "The prevailing commercial method of solving such challenges is manual labour arbitrage, in "
+            "which each challenge is distributed to a low-wage worker."
         )
         p.para(
-            "That pipeline fails three operational requirements. It is slow: human latency cannot support "
-            "time-sensitive collection. It is unreliable: roughly 10% success, because the challenge family "
-            "rotates faster than the workforce adapts. And it is a dependency: the operator rents an external "
-            "population it cannot audit, cannot surge, and which learns the target set being collected. The "
-            "third is the most serious, and it is a security property rather than a cost problem."
+            "That method has three deficiencies. Its latency is human-bound and therefore incompatible with "
+            "time-sensitive collection. Its reliability is approximately 10%, because challenge families are "
+            "revised more quickly than a workforce adapts. Finally, it depends on an external population "
+            "that cannot be audited or scaled on demand, and to which the target set is disclosed. The third "
+            "deficiency is a security property rather than an economic one."
         )
         p.para(
-            "The challenge itself is one 1600\u00d7400 image: eight candidate scenes across the top, each "
-            "holding four objects, and a grayscale silhouette of four objects in the bottom-left. The gate "
-            "opens only if the agent picks the scene whose object counts exactly reproduce the silhouette's "
-            "counts. This is the crux, and it is why a classifier does not solve it: a scene holding three "
-            "onions and one potato is wrong when the key asks for two and two, even though every individual "
-            "object was detected correctly. The task is bag matching, not recognition."
+            "The challenge is presented as a single 1600\u00d7400 image: eight candidate scenes in the upper "
+            "region, each containing four objects, and a grayscale silhouette of four objects in the lower "
+            "left. Access is granted only if the selected scene's object counts are identical to those of the "
+            "silhouette. This condition distinguishes the task from classification. A scene containing three "
+            "onions and one potato is incorrect when the key specifies two onions and two potatoes, although "
+            "every object was detected correctly. The task is multiset matching."
         )
         p.para(
-            "Objectives: (1) implement the matching agent as an MVP with a terminal interface; (2) quantify it "
-            "against meaningful baselines on hand-labelled data; (3) decompose any residual error into "
-            "perception versus decision components; (4) state, with evidence, what the design does not "
-            "establish."
+            "Objectives: (1) implement the matching agent as a minimum viable product with a terminal "
+            "interface; (2) quantify its performance against baselines on hand-labelled data; (3) decompose "
+            "residual error into perceptual and decision components; (4) state, with evidence, which design "
+            "choices the data do not support."
         )
 
         # ------------------------------------------------------ section 2
         p.heading("2. Algorithm and Implementation")
         p.heading("2.1 Perception", level=2)
         p.para(
-            "A single-stage CNN detector (YOLO26s, ~9.5M parameters, 20.8 GFLOPs) trained from COCO weights on "
-            "1,604 hand-labelled 200\u00d7200 tiles carrying 6,353 boxes. The frame is cut into nine fixed "
-            "200\u00d7200 tiles: eight scenes plus the key. Tile size is fixed at both train and inference time, "
-            "and a hard assertion rejects any frame that is not exactly 1600\u00d7400 \u2014 an earlier version "
-            "trained on whole frames at high resolution and validated beautifully while being useless, because "
-            "inference on a tile put every object outside the learned scale distribution."
+            "A single-stage convolutional detector (YOLO26s, approximately 9.5M parameters, 20.8 GFLOPs) "
+            "was trained from COCO weights on 1,604 hand-labelled 200\u00d7200 tiles containing 6,353 bounding "
+            "boxes. The frame is divided into nine fixed 200\u00d7200 tiles: eight scenes and one key. Tile "
+            "size is fixed at both training and inference time, and an assertion rejects any frame that is not "
+            "exactly 1600\u00d7400. An earlier version trained on whole frames at high resolution and reported "
+            "strong validation metrics while performing poorly in deployment, because inference on a tile "
+            "placed objects outside the learned scale distribution."
         )
         p.para(
-            "The two visual domains \u2014 colour photographs and flat grayscale renders \u2014 deliberately "
-            "share one nine-class vocabulary. Sharing lets abundant colour data teach shape priors that the "
-            "scarce silhouette data could not learn alone; measured AP50 is "
-            f"{det['per_class']['cucumber']['ap50']:.3f} on the hardest class and "
-            f"{det['per_class']['eggplant']['ap50']:.3f} on the easiest, with no class below 0.95."
+            "The colour scenes and the grayscale renders deliberately share a single nine-class vocabulary, "
+            "so that the more abundant colour data supplies shape priors unavailable from the silhouette data "
+            "alone. Measured AP50 is "
+            f"{det['per_class']['cucumber']['ap50']:.3f} on the least accurate class and "
+            f"{det['per_class']['eggplant']['ap50']:.3f} on the most accurate, with no class below 0.95."
         )
 
         p.heading("2.2 Decision layer", level=2)
         p.para(
-            "Perception is not the algorithm under test; it supplies evidence. The algorithm is the scoring "
-            "rule. For key K and candidate B, both multisets over the nine classes:"
+            "Perception supplies evidence; the algorithm under test is the scoring rule. For key K and "
+            "candidate B, both multisets over the nine classes:"
         )
         doc.need(0.34)
         p.ax.text(PW / 2, p.y, "score(K, B) = \u2212( \u03b1 \u00b7 \u03a3c max(0, K[c] \u2212 B[c])"
@@ -360,61 +361,64 @@ def build():
                   ha="center", va="top", fontsize=10.0, family="monospace")
         p.y -= 0.28
         p.para(
-            "with \u03b1 = 10 and \u03b2 = 1. The asymmetry is the design claim: a miss is usually the detector "
-            "dropping a real object on the harder grayscale key, and that information cannot be recovered "
-            "downstream, whereas a surplus is a duplicate box or background texture that the score can absorb. "
-            "Weighting the unrecoverable error higher makes the score behave like a log-likelihood ratio under "
-            "the measured noise model rather than a symmetric distance. Section 4.4 tests this claim and finds "
-            "it does not hold up on this data."
+            "The coefficients are \u03b1 = 10 and \u03b2 = 1. A missing object is typically a recall failure "
+            "on the more difficult silhouette domain, and the information it represents cannot be recovered "
+            "downstream. A surplus object is typically a duplicate detection or a background response, which "
+            "the score can absorb. Weighting the unrecoverable error more heavily makes the score approximate "
+            "a log-likelihood ratio under the measured noise model rather than a symmetric distance. Section "
+            "4.4 tests this claim and finds that the data do not support it."
         )
         p.para(
-            "Because the cost is linear in counts, the number of key items a candidate satisfies is "
-            "min(K[c], B[c]) per class \u2014 the greedy solution is exact, O(9) per candidate, no assignment "
-            "problem required. The policy is argmax over the eight candidates plus an abstain action:"
+            "Because the cost is linear in counts, the number of key objects satisfied by a candidate is "
+            "min(K[c], B[c]) per class. The greedy solution is therefore exact, requires O(9) per candidate, "
+            "and involves no assignment problem. The policy selects the highest score, with abstention on a "
+            "tie:"
         )
         doc.need(0.32)
         p.ax.text(PW / 2, p.y, "a* = argmax_i score(K, B_i)   if margin > 0 ;   recycle   if margin = 0",
                   ha="center", va="top", fontsize=9.4, family="monospace")
         p.y -= 0.26
         p.para(
-            "where margin is the gap between best and second best. A zero margin means two candidates are "
-            "indistinguishable given the observation, so the agent requests a fresh challenge instead of "
-            "spending a scored attempt on a coin flip. This is a capability a softmax classifier cannot "
-            "express, and it is what makes an unattended system auditable: the margin is exported so that "
-            "high-certainty answers can fire automatically and low-certainty ones can escalate."
+            "A margin of zero indicates that two candidates are indistinguishable given the observation. The "
+            "agent then requests a new challenge rather than consuming a scored attempt on an indeterminate "
+            "choice. This behaviour cannot be expressed by a classifier with a softmax output, and it permits "
+            "the system to be operated with an escalation path: the margin is exported, so high-confidence "
+            "answers may be accepted automatically and the remainder escalated."
         )
 
         # ------------------------------------------------------ section 3
         p.heading("3. Experimental Design and Baselines")
         p.para(
-            "All decision-level systems are evaluated on the same 48 hand-labelled challenges, using the same "
-            "cached detector output at the production setting (confidence 0.4, tile size 320). This is the "
-            "central methodological choice: because every baseline consumes identical evidence, differences "
-            "between rows attribute credit to the decision rule and not to a differently trained model."
+            "All decision-level systems are evaluated on the same 48 hand-labelled challenges, using identical "
+            "cached detector output at the production setting (confidence 0.4, tile size 320). Because every "
+            "baseline consumes the same evidence, differences between rows are attributable to the decision "
+            "rule rather than to differences in training."
         )
         p.para(
-            "Six baselines span the space from uninformed to nearly complete. Random is uniform over the eight "
-            "candidates, averaged over 1,000 trials because a single draw from a binomial(48, 0.125) is too "
-            "noisy to serve as a floor. Always-basket-0 is the trivial floor. Classical histogram matching is "
-            "the honest no-learning approach a team without labels would build: chi-square distance between "
-            "intensity and gradient-orientation histograms of the key and each scene. The next two use the "
-            "trained detector but discard the key entirely, picking the scene with the most objects or the "
-            "highest total confidence. The final row is the complete agent with a symmetric 1:1 penalty, which "
-            "isolates the asymmetry from the matching layer as a whole."
+            "Six baselines were selected. Random selection is uniform over the eight candidates and is "
+            "averaged over 1,000 trials, since a single draw from a binomial(48, 0.125) is too noisy to serve "
+            "as a reference. Invariant selection of the first candidate provides a trivial floor. Classical "
+            "histogram matching represents the no-learning approach available without labels: chi-square "
+            "distance between intensity and gradient-orientation histograms of the key and each scene. Two "
+            "further baselines use the trained detector but disregard the key, selecting the scene with the "
+            "most objects or the highest total confidence. The final baseline applies the complete pipeline "
+            "with a symmetric 1:1 penalty, isolating the contribution of the asymmetry."
         )
         p.para(
-            "Perception is evaluated separately on 288 held-out 200\u00d7200 tiles carrying human boxes, so that "
-            "sensor quality and decision quality cannot be confused. Matching is greedy, descending confidence, "
-            "one-to-one, IoU \u2265 0.5, with AP computed under all-point interpolation over detections pooled "
-            "across tiles. Confidence intervals are Wilson score intervals; paired comparisons use an exact "
-            "McNemar test, which is the correct test for two systems scored on the same items."
+            "Perception is evaluated separately on 288 held-out 200\u00d7200 tiles with human annotations, so "
+            "that detector quality and decision quality are not conflated. Matching is greedy by descending "
+            "confidence, one-to-one, at IoU \u2265 0.5, with average precision computed by all-point "
+            "interpolation over detections pooled across tiles. Confidence intervals are Wilson score "
+            "intervals. Paired comparisons use an exact McNemar test, which is appropriate for two systems "
+            "evaluated on the same items."
         )
 
         p.figure(
             "fig1_baselines.png", width_in=5.3,
             caption="Figure 1. Task accuracy by system on 48 hand-labelled challenges. Error bars are 95% "
-                    "Wilson intervals; the dashed line is the 12.5% chance rate. Both rows that use the "
-                    "matching layer reach 100%; every row that omits it stays within noise of chance.",
+                    "Wilson intervals; the dashed line is the 12.5% chance rate. Both systems incorporating "
+                    "the matching stage achieve 100%; systems lacking it do not differ significantly from "
+                    "chance.",
         )
 
         rows = [["System", "Correct", "Accuracy", "95% CI", "p vs agent"]]
@@ -442,19 +446,19 @@ def build():
         )
 
         p.para(
-            f"The separation is decisive. Against the strongest baseline that omits the matching layer "
-            f"({pct(b['yolo_confidence']['accuracy'])}), the agent fixes "
-            f"{sig['yolo_confidence']['agent_only']} items and breaks "
-            f"{sig['yolo_confidence']['baseline_only']}, p = {sig['yolo_confidence']['p']:.1e}. Against "
-            f"classical histogram matching the agent fixes {sig['hist_match']['agent_only']} and breaks "
-            f"{sig['hist_match']['baseline_only']}, p = {sig['hist_match']['p']:.1e}. The two detector-based "
-            "heuristics that ignore the key confirm the problem statement: knowing where objects are is "
-            "worthless if you do not compare counts."
+            f"The difference is substantial. Against the strongest baseline lacking a matching stage "
+            f"({pct(b['yolo_confidence']['accuracy'])}), the agent corrects "
+            f"{sig['yolo_confidence']['agent_only']} items and regresses "
+            f"{sig['yolo_confidence']['baseline_only']} (p = {sig['yolo_confidence']['p']:.1e}). Against "
+            f"classical histogram matching it corrects {sig['hist_match']['agent_only']} and regresses "
+            f"{sig['hist_match']['baseline_only']} (p = {sig['hist_match']['p']:.1e}). The two detector-based "
+            "heuristics that disregard the key confirm the problem formulation: localisation alone is "
+            "insufficient without comparison of counts."
         )
         p.para(
-            "The comparison against the symmetric variant is the important negative result. Both reach 48/48, "
-            "so McNemar returns p = 1 with zero discordant pairs. On this evaluation set the 10:1 asymmetry "
-            "is not doing measurable work. Section 4.4 treats this as a finding rather than hiding it."
+            "The comparison with the symmetric variant is reported as a negative result. Both achieve 48/48, "
+            "so McNemar returns p = 1 with no discordant pairs. The 10:1 asymmetry has no measurable effect "
+            "on this evaluation set. Section 4.4 discusses the implications."
         )
 
         # ------------------------------------------------------ section 4
@@ -474,13 +478,12 @@ def build():
                     f"{meta['conf']}, IoU 0.5.",
         )
         p.para(
-            f"Micro recall is {pct(mi['recall'])}: {mi['tp']} of {det['_raw_counts']['n_gt']} labelled objects "
-            f"were found, with {mi['fn']} missed. That is the number that matters downstream, because a missed "
-            "object is information the matching layer can never recover. Localisation is looser \u2014 median "
-            f"IoU on true positives is {det['localisation']['median']:.3f}, and only "
-            f"{pct(det['localisation']['gt_090'], 0)} exceed 0.90 \u2014 but the ranker only counts objects, so "
-            "box tightness barely affects task accuracy. The metric the detector is weakest on is the metric "
-            "the agent does not need."
+            f"Micro recall is {pct(mi['recall'])}: {mi['tp']} of {det['_raw_counts']['n_gt']} annotated objects "
+            f"were detected, with {mi['fn']} missed. Recall is the relevant measure downstream, since a missed "
+            "object cannot be recovered by the matching stage. Localisation is less precise: median IoU on true "
+            f"positives is {det['localisation']['median']:.3f}, and only "
+            f"{pct(det['localisation']['gt_090'], 0)} exceed 0.90. Because the ranking stage counts objects "
+            "rather than localising them, box precision has limited effect on task accuracy."
         )
         p.figure("fig3_pr_curves.png", width_in=2.7,
                  caption="Figure 2. Per-class precision-recall curves at IoU 0.5, pooled across tiles. Legend "
@@ -488,11 +491,11 @@ def build():
 
         p.heading("4.2 Calibration and threshold selection", level=2)
         p.para(
-            f"Expected Calibration Error is {det['calibration']['ece']:.3f} over "
-            f"{det['calibration']['n_detections']} detections. The reliability table shows the low-confidence "
-            "band is essentially noise: boxes between 0.4 and 0.5 are correct only 25% of the time, while the "
-            "0.8\u20130.9 band is correct 99%. That measurement, not preference, is why the production "
-            f"confidence floor is {meta['conf']}."
+            f"Expected calibration error is {det['calibration']['ece']:.3f} over "
+            f"{det['calibration']['n_detections']} detections. Detections in the 0.4\u20130.5 confidence band "
+            "are correct 25% of the time, while those in the 0.8\u20130.9 band are correct 99% of the time. "
+            "This measurement, rather than preference, determines the production threshold of "
+            f"{meta['conf']}."
         )
         p.figure("fig5_calibration.png", width_in=2.5,
                  caption="Figure 3. Reliability diagram. Departure from the diagonal at low confidence is the "
@@ -505,13 +508,13 @@ def build():
             "defensible claim is \u201cat least 92.6% with 95% confidence\u201d, not \u201cperfect\u201d."
         )
         p.para(
-            "A single accuracy number conflates two failure modes, so we decompose it. On "
-            f"{ag['ceiling_n']}/{ag['n']} strips ({pct(ag['ceiling_rate'])}) at least one candidate scene "
-            "exactly reproduced the key \u2014 the oracle ceiling. The ranker picked the correct scene on "
-            f"{ag['exploited']} of those {ag['ceiling_n']} ({pct(ag['exploit_rate'])}). The remaining strips "
-            "had no exact match because perception lost information, and were still answered correctly by "
-            "partial scoring. The decision rule is therefore not the bottleneck; when clean information "
-            "exists it is used perfectly."
+            "A single accuracy figure conflates two failure modes, so it is decomposed. On "
+            f"{ag['ceiling_n']}/{ag['n']} frames ({pct(ag['ceiling_rate'])}) at least one candidate scene "
+            "exactly reproduced the key; this is the oracle ceiling. The ranking stage selected correctly on "
+            f"all {ag['exploited']} of those {ag['ceiling_n']} ({pct(ag['exploit_rate'])}). The remaining frames "
+            "contained no exact candidate because perception had lost information, and were answered correctly "
+            "by partial scoring. The decision rule is therefore not the limiting component: where complete "
+            "information is available it is used without error."
         )
         p.figure("fig9_ceiling.png", width_in=2.5,
                  caption="Figure 4. Oracle ceiling decomposition. The second bar is the ranking layer's "
@@ -519,35 +522,34 @@ def build():
 
         p.heading("4.4 Ablations", level=2)
         p.para(
-            "The confidence floor is the one hyperparameter this data can identify. Accuracy peaks at a single "
-            "interior value and degrades on both sides: too low and background texture enters the multiset, "
-            "too high and a dim but genuine object vanishes from the key. That is the signature of a real "
-            "effect rather than a noisy plateau."
+            "The confidence threshold is the one hyperparameter the data can identify. Accuracy attains a "
+            "single interior maximum and decreases on both sides. A lower threshold admits background texture "
+            "into the multiset; a higher threshold removes dim but genuine objects from the key. This pattern "
+            "is characteristic of a genuine effect rather than a plateau."
         )
         p.figure("fig7_confidence_sweep.png", width_in=2.6,
                  caption="Figure 5. Confidence-floor sweep. Interior optimum at 0.40.")
         p.para(
-            "The penalty ratio, by contrast, is not identifiable. Accuracy is flat at 48/48 for every ratio "
-            "from 1:1 to 50:1. The evaluation set saturates, so it cannot distinguish the asymmetric score "
-            "from a symmetric one, and we do not claim otherwise. The asymmetry remains justified by the "
-            "measured noise profile \u2014 recall 99.0% against 2.1% false-positive leakage, an error "
-            "distribution that is genuinely one-sided \u2014 and by unit tests that pin the required ordering "
-            "(a miss must outrank a surplus). It is not justified by a measured peak, because there is none "
-            "on this data."
+            "The penalty ratio, in contrast, is not identifiable. Accuracy is invariant at 48/48 across every "
+            "ratio from 1:1 to 50:1. The evaluation set is saturated and cannot distinguish the asymmetric "
+            "score from a symmetric one. The asymmetry remains justified by the measured noise profile \u2014 "
+            "recall of 99.0% against 2.1% false-positive leakage, an error distribution that is genuinely "
+            "one-sided \u2014 and by unit tests that fix the required ordering. It is not justified by a "
+            "measured optimum, since none exists on this data."
         )
         p.figure("fig8_penalty_sweep.png", width_in=2.6,
-                 caption="Figure 6. Penalty-ratio sweep. Flat: no identifiable optimum.")
+                 caption="Figure 6. Penalty-ratio sweep. Accuracy is invariant across the range tested.")
 
         p.heading("4.5 Robustness and the dominant failure case", level=2)
         p.para(
-            "The clearest limitation is degradation of the input, not adversarial imagery. The agent is stable "
-            "under mild transport damage but collapses under blur and heavy recompression: "
+            "The principal limitation is degradation of the input rather than adversarial imagery. The agent "
+            "is stable under mild transport damage but degrades under blur and heavy recompression: "
             f"{rob.get('jpeg=40', {}).get('right', '?')}/48 at JPEG quality 40, "
             f"{rob.get('blur=1.0', {}).get('right', '?')}/48 at blur radius 1.0, and "
-            f"{rob.get('blur=2.0', {}).get('right', '?')}/48 at radius 2.0. Because the pipeline slices fixed "
-            "200-pixel tiles, a degraded frame mis-slices every tile and the failure is silent rather than "
-            "loud. Operationally the binding constraint is link quality and relay compression, not the "
-            "defender's cleverness \u2014 a conclusion that changes where engineering effort should go."
+            f"{rob.get('blur=2.0', {}).get('right', '?')}/48 at radius 2.0. Because the pipeline segments fixed "
+            "200-pixel tiles, a degraded frame is mis-segmented without raising an error. The practical "
+            "constraint is therefore link quality and relay compression rather than the defender's "
+            "countermeasures, which indicates where engineering effort should be directed."
         )
         p.figure("fig6_robustness.png", width_in=4.6,
                  caption="Figure 7. Accuracy under input degradation. Gaussian blur is the dominant failure "
@@ -556,65 +558,65 @@ def build():
         # ------------------------------------------------------ section 5
         p.heading("5. Limitations")
         p.bullet(
-            "Statistical power. n = 48 supports roughly a seven-point interval. The 12.5% \u2192 100% "
-            "separation clears it; the 1:1 versus 10:1 comparison does not, and cannot."
+            "Statistical power. With n = 48 the confidence interval spans approximately seven percentage "
+            "points. The separation from the 12.5% chance rate exceeds this; the comparison between 1:1 and "
+            "10:1 does not, and cannot."
         )
         p.bullet(
-            "One evaluation set, used during development. The confidence floor was chosen with these strips in "
-            "view, so 100% is optimistic; the honest estimate is the Wilson lower bound, 92.6%."
+            "Single evaluation set used during development. The confidence threshold was selected with these "
+            "frames in view, so 100% is optimistic. The defensible estimate is the Wilson lower bound of 92.6%."
         )
         p.bullet(
             "Penalty asymmetry unverified. Reported above as a negative result rather than tuned away."
         )
         p.bullet(
-            "Class imbalance in the keys. Green pepper and carrot never appear as key classes here (0 "
-            "instances), so behaviour on those keys is untested despite both classes being well detected."
+            "Class imbalance in the keys. Green pepper and carrot do not appear as key classes (0 instances), "
+            "so behaviour on such keys is untested although both classes are well detected."
         )
         p.bullet(
-            "No live-session integration. The agent runs on saved frames, so end-to-end latency and any "
+            "No live-session integration. The agent operates on saved frames, so end-to-end latency and "
             "rate-limiting behaviour are unmeasured."
         )
         p.bullet(
-            "Synthetic robustness. Blur and recompression approximate transport damage; they are not a "
-            "substitute for frames captured under real degraded conditions."
+            "Synthetic robustness. Blur and recompression approximate transport damage but do not substitute "
+            "for frames captured under degraded conditions."
         )
 
         # ------------------------------------------------------ section 6
         p.heading("6. Tactical Implications")
         p.para(
-            "First, the 10% human baseline is not a capability, it is a delay. A $2/1000, human-latency, "
-            "10%-reliable pipeline can only serve bulk collection where minutes do not matter. Automating to "
-            "benchmark-100% at milliseconds per item does not merely cut unit cost; it changes what the "
-            "capability can be used for."
+            "First, the 10% human baseline constitutes a delay rather than a capability. A pipeline costing "
+            "$2 per 1,000 items, operating at human latency and succeeding at 10%, is restricted to bulk "
+            "collection where minutes are immaterial. Automation at benchmark accuracy and millisecond latency "
+            "changes the range of missions the capability supports, not only its unit cost."
         )
         p.para(
-            "Second, the dependency is the real vulnerability. Renting human solvers leaks the target set to a "
-            "third-party population. A locally hosted model leaks nothing, which is a security property and "
-            "the more important one."
+            "Second, the external dependency is the principal vulnerability. Renting human solvers discloses "
+            "the target set to a third party; a locally hosted model does not. This is a security property and "
+            "the more significant one."
         )
         p.para(
-            "Third, confidence gating is what makes automation safe. Because the agent exports a margin, it can "
-            "be tuned toward precision and the escalation rate is computable before deployment. Systems that "
-            "cannot abstain cannot be safely left running."
+            "Third, confidence gating enables safe automation. Because the agent reports a margin, it can be "
+            "configured for precision and the escalation rate computed before deployment. A system that "
+            "cannot abstain cannot be operated unattended."
         )
         p.para(
-            "Fourth, the measured bottleneck is label scarcity in the degraded visual domain, not model "
-            "capacity \u2014 missed detections are effectively zero. The counter to a system like this is "
-            "therefore not a harder puzzle but a puzzle whose rendering shifts faster than labels can be "
-            "collected. That is the finding worth briefing, and it follows directly from the decomposition in "
-            "Section 4.3 rather than from intuition."
+            "Fourth, the measured limitation is label availability in the degraded visual domain rather than "
+            "model capacity, since missed detections are negligible. The effective counter to such a system is "
+            "not a more difficult puzzle but one whose rendering changes faster than labels can be collected. "
+            "This follows from the decomposition in Section 4.3."
         )
 
         # ------------------------------------------------------ section 7
         p.heading("7. Conclusion")
         p.para(
-            f"The agent implements the approved MVP and beats every baseline that omits the matching layer by a "
-            f"margin that is statistically decisive (p < 10\u207b\u00b9\u2070). Its accuracy is "
-            f"{pct(ag['accuracy'])} on hand-labelled data with a defensible lower bound of 92.6%, and its error "
-            "decomposition shows the decision rule converts 100% of the information perception supplies. The "
-            "design's headline claim \u2014 that the 10:1 asymmetry matters \u2014 is not supported by this "
-            "data, and we report that plainly. The dominant real-world failure mode is input degradation rather "
-            "than adversarial imagery, which is a more actionable finding than a higher benchmark number would "
+            f"The agent implements the approved minimum viable product and outperforms every baseline lacking a "
+            f"matching stage by a statistically decisive margin (p < 10\u207b\u00b9\u2070). Accuracy is "
+            f"{pct(ag['accuracy'])} on hand-labelled data, with a lower confidence bound of 92.6%, and the error "
+            "decomposition shows that the decision rule converts all information supplied by perception. The "
+            "principal design claim, that the 10:1 asymmetry is material, is not supported by this data and is "
+            "reported as such. The dominant failure mode in practice is input degradation rather than "
+            "adversarial imagery, which is a more consequential finding than a higher benchmark value would "
             "have been."
         )
 

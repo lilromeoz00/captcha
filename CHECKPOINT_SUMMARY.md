@@ -1,69 +1,68 @@
-# Checkpoint progress summary
+# Checkpoint submission summary
 
-**CS471 Final Project — Lesson 36 (Ugly but Functional)**
+**Author:** Jordan Moore
+**Repository:** https://github.com/lilromeoz00/captcha
+**Submitted version:** https://github.com/lilromeoz00/captcha/tree/checkpoint
 
-**Repository:** https://github.com/lilromeoz00/captcha  ·  **Submitted version:** https://github.com/lilromeoz00/captcha/tree/checkpoint
+---
 
-## What is complete
+## Completed functionality
 
-In the modern age, data is gold. The best data sits behind hard-to-reach places,
-making it expensive and difficult to obtain — and one of the most popular
-anti-collection techniques defending it is the CAPTCHA. The hardest, best
-maintained, and most expensive member of that family is the FunCaptcha-class
-"match the objects by count" challenge. Today it is beaten by manual labour
-arbitrage: roughly **$2 per 1,000 solves**, human-latency bound, about **10%**
-reliable because families rotate faster than workers retrain, and dependent on an
-external population that learns your target set. Nothing automated, nothing fast.
+The project addresses a limitation on automated data collection: access to defended
+services is frequently gated by a visual challenge rather than by cryptographic
+controls. The challenge family examined here presents eight candidate scenes and a
+grayscale silhouette of a different object set, and requires selection of the scene
+whose object counts reproduce the silhouette exactly. The prevailing commercial
+solution distributes these challenges to low-wage workers at approximately $2 per
+1,000 items, with human latency, an approximate 10% success rate, and a dependency
+on an external population to which the target set is disclosed.
 
-We automated it and measured the result. The challenge is one 1600×400 frame —
-eight candidate scenes plus a grayscale silhouette of a *different* object set —
-and the gate opens only if you pick the scene whose object **counts** exactly
-reproduce the silhouette's. That is decision-theoretic bag matching, not
-classification: a scene with three onions and one potato is wrong when the key asks
-for two and two, even though every object was detected correctly. We implement it
-as a YOLO26s detector feeding an asymmetric multiset score (10:1 penalty on missing
-key items versus surplus ones), with an explicit **abstain** action when the top
-two candidates tie — recycling for a fresh challenge strictly dominates a
-coin-flip guess, which is a behaviour a softmax classifier cannot express.
+The agent implemented here replaces that pipeline with a local computation. A
+single-stage object detector (YOLO26s) processes nine fixed 200×200 tiles and
+reduces each to a class multiset. Each candidate scene is then scored against the
+key using an asymmetric penalty that weights an unaccounted key object ten times
+more heavily than a surplus object, reflecting the measured one-sided error
+distribution of the detector. The agent selects the highest-scoring scene, and
+abstains when the two highest scores are equal, since no observation distinguishes
+them and a new challenge can be requested at no cost.
 
-**Measured:** **48/48 = 100%** task accuracy on 48 hand-labelled challenges
-(Wilson 95% CI [92.6, 100.0]) against the 10% human baseline; **99.2%** object
-recall against human boxes on 288 held-out tiles; and an oracle decomposition
-showing the decision rule exploits **39/39** available exact matches, which proves
-the algorithm — not merely the model — is correct. 48 automated tests pass, and the
-core math runs with no GPU.
+Results on 48 hand-labelled challenges are 48/48, or 100%, with a Wilson 95%
+confidence interval of [92.6, 100.0]. Object recall on 288 held-out tiles is 99.0%
+and mAP50 is 0.983. An oracle decomposition shows that on the 39 frames containing a
+scene that exactly reproduced the key, the ranking stage selected it 39 times,
+indicating that residual error originates in perception rather than in decision
+making. The test suite contains 48 automated tests at this stage, of which the
+majority require neither a GPU nor the model weights.
 
 ## Remaining work
 
-Scale evaluation to ~300 challenges to narrow the interval; add confusion matrix,
-PR curves, and training convergence plots; robustness sweep (preliminary:
-half-resolution costs −12.5 points, making degraded relay conditions the real
-threat); wire the solver to a live session loop; build the tactical analysis
-section for the Lesson 41 defence.
+Evaluation at larger scale, to narrow the confidence interval; an independent test
+set, since the confidence threshold was selected with the current frames in view; a
+confusion matrix and per-class precision-recall analysis; a robustness sweep;
+integration with a live session loop; and preparation of the final report.
 
 ## Contributions
 
-**Solo submission.** Jordan Moore is the only team member; every component below was
-authored by him, so the split is 100% / 0%.
+Solo submission. The author performed all work: problem definition; capture and
+curation of six dataset generations; annotation of all grayscale key tiles; detector
+training and evaluation; error decomposition and threshold selection; the scoring
+function, abstention policy and agent loop; the test suite; and the documentation.
 
-**Jordan Moore** — problem framing and tactical analysis; capture and curation of six
-dataset generations; hand-labelling of all grayscale key tiles; detector training and
-evaluation; TIDE error decomposition and confidence-floor selection; the scoring
-function, abstain policy and agent loop; the test suite; both design documents.
+## Issues encountered
 
-**Challenges.** Three are worth naming. (1) A model trained at `imgsz=1280` on
-whole frames reported val mAP50 of 0.991 and was useless in production, because
-inference on a 200×200 tile put every object outside the learned scale
-distribution. (2) Fine-tuning failed outright — best epoch was epoch 1 — because
-MD5 showed 69% of the "new" images were byte-identical to what the previous model
-had already trained on for 200 epochs. (3) An annotation tool that wrote crops
-without recording their source coordinates made 332 finished labels unusable; we
-recovered them exactly by normalised cross-correlation template matching (787
-crops, all ≥0.998).
+Three are material. First, a model trained on whole frames at high resolution
+reported validation mAP50 of 0.991 but performed poorly in deployment, because
+inference on a 200×200 tile placed objects outside the learned scale distribution.
+Second, fine-tuning from a previous checkpoint terminated with its best score at
+epoch 1; inspection by file hash showed that 798 of 1,150 training images were
+byte-identical to images the previous model had already trained on. Third, the
+annotation tool stored crops without source coordinates, rendering 332 completed
+annotations unusable; the coordinates were recovered exactly by normalised
+cross-correlation template matching.
 
-**AI use disclosure.** Per the assignment's AI policy: the code was developed with
-the assistance of an AI coding assistant, and we can explain and defend every
-module. The algorithm, the measurement methodology, and every number reported above
-come from our own data and experiments; the write-ups distinguish measured results
-from design intent, and §7.2 of `docs/ALGORITHM.md` explicitly reports an ablation
-our data *cannot* identify rather than claiming a fit.
+## AI use
+
+The code was developed with the assistance of an AI coding assistant. The author can
+explain and defend every module. The algorithm, the measurement methodology and all
+reported values derive from the author's own data and experiments. The documentation
+distinguishes measured results from design intent.

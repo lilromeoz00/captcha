@@ -70,7 +70,7 @@ def fig_baselines(d):
         ("yolo_count", "YOLO +\nmost objects"),
         ("yolo_confidence", "YOLO +\nmax confidence"),
         ("yolo_symmetric_1to1", "Full agent\nsymmetric 1:1"),
-        ("yolo_asym_10to1", "Full agent\nSUBMITTED"),
+        ("yolo_asym_10to1", "Full agent\n(submitted)"),
     ]
     labels, accs, los, his, colours = [], [], [], [], []
     for key, lab in order:
@@ -299,12 +299,12 @@ def fig_penalty_sweep(d):
     ax.set_xscale("log")
     ax.set_xlabel(r"miss penalty $\alpha$ (surplus $\beta=1$)")
     ax.set_ylabel("task accuracy (%)")
-    ax.set_ylim(88, 102)
-    ax.set_title("Penalty ratio is NOT identifiable here", fontsize=8.5, color=WARN)
+    ax.set_ylim(84, 104)
+    ax.set_title("Penalty ratio is not identifiable on this set", fontsize=8.2, color=WARN)
     ax.text(
-        0.5, 0.06,
-        "flat across 1:1 - 50:1: the 48-strip set saturates",
-        transform=ax.transAxes, ha="center", fontsize=6.4, color=WARN,
+        0.5, 0.90,
+        "accuracy invariant from 1:1 to 50:1; the evaluation set is saturated",
+        transform=ax.transAxes, ha="center", fontsize=6.2, color=WARN,
     )
     return _save(fig, "fig8_penalty_sweep.png")
 
@@ -313,7 +313,7 @@ def fig_ceiling(d):
     a = d["agent"]
     fig, ax = plt.subplots(figsize=(3.2, 2.3))
     vals = [a["ceiling_rate"] * 100, a["exploit_rate"] * 100]
-    labs = ["strips where an\nexact match existed", "of those, picked\nby the ranker"]
+    labs = ["frames where an\nexact match existed", "of those, selected\nby the ranker"]
     bars = ax.bar(labs, vals, color=[MUTED, ACCENT], width=0.55, edgecolor=INK, linewidth=0.6)
     for b, v, extra in zip(bars, vals, [f"{a['ceiling_n']}/{a['n']}", f"{a['exploited']}/{a['ceiling_n']}"]):
         ax.text(b.get_x() + b.get_width() / 2, v + 2, f"{v:.1f}%\n({extra})",

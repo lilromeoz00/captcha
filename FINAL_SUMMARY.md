@@ -1,91 +1,97 @@
-# CS471 Final Submission — summary for Blackboard
+# Final submission summary
 
+**Author:** Jordan Moore
 **Repository:** https://github.com/lilromeoz00/captcha
-**Submitted version:** https://github.com/lilromeoz00/captcha/tree/final  (tag `final`)
-**Report:** `CS471_Final_Report.pdf` (5 pages, in the repository root)
+**Submitted version:** https://github.com/lilromeoz00/captcha/tree/final
+**Report:** `CS471_Final_Report.pdf` (5 pages, repository root)
 
 ---
 
-## What we submitted
+## Summary
 
-A working AI agent that defeats an adversarial visual access-control challenge, plus
-a full experimental analysis of it. The agent is a single-stage CNN detector feeding
-a decision-theoretic multiset-matching layer with an explicit abstain action.
+This submission comprises a working AI agent that solves an adversarial visual
+access-control challenge, together with a complete experimental evaluation of its
+performance.
 
-**Algorithm.** The challenge is one 1600×400 frame: eight candidate scenes plus a
-grayscale silhouette of a *different* object set. The gate opens only if you pick the
-scene whose object **counts** exactly reproduce the silhouette's. That is bag
-matching, not classification — a scene with three onions and one potato is wrong when
-the key asks for two and two, even though every object was detected correctly. We
-score each candidate with an asymmetric penalty (α=10 for a key object left
-unaccounted for, β=1 for a surplus object), rank, and **abstain** when the top two
-tie, because recycling for a fresh challenge strictly dominates a coin flip.
+**Algorithm.** The challenge is a single 1600×400 frame containing eight candidate
+scenes and a grayscale silhouette of a different object set. Access is granted only
+if the selected scene's object counts reproduce the silhouette's counts exactly. The
+problem is therefore one of multiset matching rather than classification: a scene
+containing three onions and one potato is incorrect when the key specifies two
+onions and two potatoes, even though every object was correctly detected. Each
+candidate is scored using an asymmetric penalty of 10 for an unaccounted key object
+and 1 for a surplus object, and the agent abstains when the two highest scores are
+equal.
 
-**Baseline comparison.** Six baselines on identical cached detector output, so
-differences attribute to the decision rule rather than to a differently trained
-model: random (12.5%, 1,000 trials), always-basket-0 (18.8%), classical CV histogram
-matching (12.5%), YOLO + most objects (20.8%), YOLO + max confidence (25.0%), and the
-full pipeline with a symmetric 1:1 penalty (100%).
+**Baselines.** Six baselines were evaluated on identical cached detector output, so
+that differences between systems reflect the decision rule rather than differences
+in training. These are: random selection (12.5%, averaged over 1,000 trials),
+invariant selection of the first candidate (18.8%), classical histogram matching
+(12.5%), YOLO with a count-based rule (20.8%), YOLO with a confidence-based rule
+(25.0%), and the complete pipeline with a symmetric penalty (100%).
 
 **Quantitative results.**
 
-| metric | value |
+| Metric | Value |
 |---|---|
-| Task accuracy, 48 hand-labelled challenges | **48/48 = 100%**, Wilson 95% CI [92.6, 100.0] |
-| vs strongest non-matching baseline | 36 fixed, 0 broken, exact McNemar p = 2.9e-11 |
-| Object recall, 288 held-out tiles | 99.0% (1132/1143), precision 97.9% |
+| Task accuracy, 48 hand-labelled challenges | 48/48 = 100%, Wilson 95% CI [92.6, 100.0] |
+| Comparison with strongest non-matching baseline | 36 corrected, 0 regressed, McNemar p = 2.9×10⁻¹¹ |
+| Object recall, 288 held-out tiles | 99.0% (1132/1143) |
+| Object precision | 97.9% |
 | mAP50 | 0.983 |
-| Expected Calibration Error | 0.127 (0.4–0.5 band is 25% accurate → justifies the 0.4 floor) |
-| Oracle ceiling exploited by the ranker | 39/39 = 100% |
-| Median localisation IoU on true positives | 0.895 |
+| Expected calibration error | 0.127 |
+| Oracle ceiling exploited | 39/39 = 100% |
+| Median localisation IoU | 0.895 |
+| Accuracy at Gaussian blur, radius 2.0 | 64.6% |
 
-**Analysis and limitations.** We decomposed accuracy into an oracle ceiling
-(strips where an exact match existed at all) and exploitation (whether the ranker
-took it): the ranker converts 100% of available information, so the decision layer is
-not the bottleneck. Two findings cut against our own design and are reported as such.
-First, the **penalty asymmetry is not identifiable** on this data — a symmetric 1:1
-score also reaches 48/48, so we justify α=10 by the measured one-sided noise profile
-(99.0% recall vs 2.1% false-positive leakage) rather than by a measured optimum. The
-confidence floor *is* identifiable, with a genuine interior optimum at 0.40. Second,
-the dominant failure mode is **input degradation, not adversarial imagery**: Gaussian
-blur at radius 2.0 drops accuracy to 64.6%, because fixed 200-pixel tiling mis-slices
-a degraded frame silently. Operationally that means link quality and relay
-compression are the binding constraint, which is more actionable than a higher
-benchmark number would have been.
+**Analysis.** Accuracy was decomposed into an oracle ceiling, defined as the frames
+on which some candidate exactly reproduced the key, and the proportion of that
+ceiling realised by the ranking stage. The ranking stage realised 100%, so decision
+making is not the limiting component. Two findings qualify the design and are
+reported accordingly. The penalty asymmetry is not identifiable on this data: a
+symmetric 1:1 penalty also achieves 48/48, so the value of 10 is justified by the
+measured one-sided error distribution (99.0% recall against 2.1% false-positive
+leakage) rather than by a measured optimum. The confidence threshold, by contrast,
+is identifiable, with an interior optimum at 0.40. The dominant failure mode is
+input degradation rather than adversarial imagery: Gaussian blur at radius 2.0
+reduces accuracy to 64.6%, because fixed 200-pixel tiling mis-segments a degraded
+frame without raising an error. The operational implication is that link quality and
+relay compression, rather than the adversary's countermeasures, determine
+reliability.
 
-**Reproducibility.** 80 automated tests (32 of which need no GPU and no weights),
-weights and all evaluation data in the repository, and the report PDF is *generated*
-from `results/experiments.json` so it cannot drift from the code. Five commands
-regenerate everything; none requires training.
+**Reproducibility.** The repository contains 80 automated tests, the trained
+weights, and all evaluation data. The report is generated from
+`results/experiments.json`, so it cannot diverge from the code. Four commands
+regenerate every reported value; none requires training.
 
 ---
 
-## Grading rubric map
-
-| criterion | pts | where |
-|---|---|---|
-| Algorithmic correctness & understanding | 40 | `solver/multiset.py` (the algorithm, pure Python), `docs/ALGORITHM.md`, report §2, 17 unit tests |
-| Complete functional MVP | 25 | `solver/` CLI: `solve`, `eval`, `selftest`; annotated visual output |
-| Experimental design & baseline | 25 | `experiments/baselines.py`, report §3, Table 1, Figure 1 |
-| Quantitative performance analysis | 30 | report §4 (Tables 2–3, Figures 2–7), ceiling decomposition, ablations, McNemar tests |
-| Testing & reproducibility | 15 | 80 tests, data in repo, 5-command regeneration |
-| Documentation & limitations | 15 | report §5, `README.md`, `PROGRESS.md`, `docs/` |
-
 ## Contributions
 
-**Solo submission.** Jordan Moore is the only team member; every component below was
-authored by him, so the split is 100% / 0%. There is no second member to attribute
-work to.
+Solo submission. The author performed all work: problem definition and tactical
+analysis; capture and curation of six dataset generations; annotation of all
+grayscale key tiles; detector training and evaluation; error decomposition and
+threshold selection; the scoring function, abstention policy and agent loop; the
+experiment harness, all six baselines, the metrics implementation and the report
+generator; the test suite; and the documentation.
 
-**Jordan Moore** — problem framing and tactical analysis; capture and curation of six
-dataset generations; hand-labelling of all grayscale key tiles; detector training and
-evaluation; TIDE error decomposition and confidence-floor selection; the scoring
-function, abstain policy and agent loop; the experiment harness, all six baselines,
-the metrics implementation and the report generator; the test suite (80 tests); both
-design documents.
+## AI use
 
-**AI use disclosure.** The code was developed with the assistance of an AI coding
-assistant, and I can explain and defend every module. The algorithm, measurement
-methodology, and every reported number come from my own data and experiments. The
-report distinguishes measured results from design intent, and §4.4 explicitly reports
-an ablation my data *cannot* identify rather than claiming a fit.
+The code was developed with the assistance of an AI coding assistant. The author can
+explain and defend every module. The algorithm, the measurement methodology and all
+reported values derive from the author's own data and experiments. The report
+distinguishes measured results from design intent, and Section 4.4 reports an
+ablation that the data cannot identify rather than asserting a fit.
+
+---
+
+## Mapping to the grading criteria
+
+| Criterion | Points | Location |
+|---|---|---|
+| Algorithmic correctness and understanding | 40 | `solver/multiset.py`, `docs/ALGORITHM.md`, report §2, 17 unit tests |
+| Complete functional MVP | 25 | `solver/` command-line interface; annotated output |
+| Experimental design and baseline | 25 | `experiments/baselines.py`, report §3, Table 1, Figure 1 |
+| Quantitative performance analysis | 30 | report §4, Tables 2–3, Figures 2–7 |
+| Testing and reproducibility | 15 | 80 tests, data included, four-command regeneration |
+| Documentation and limitations | 15 | report §5, `README.md`, `PROGRESS.md`, `docs/` |
