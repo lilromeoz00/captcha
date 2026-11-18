@@ -65,12 +65,9 @@ Two things go in the Blackboard text box:
    summary, already written, covering completed functionality, remaining work, and
    per-member contributions.
 
-Before you submit, fix the two placeholders in `CHECKPOINT_SUMMARY.md` and
-`PROGRESS.md`:
-- `[Teammate]` → your teammate's actual name
-- The repo URL at the top of `CHECKPOINT_SUMMARY.md`
-- Adjust the ~65% / ~35% split if it doesn't match reality (this is graded under
-  "Team progress and accountability")
+Before you submit, check that `CHECKPOINT_SUMMARY.md` and `PROGRESS.md` name you as
+the sole author (this is a solo submission, so the contribution split is 100% / 0%).
+Those files are already filled in correctly.
 
 ---
 

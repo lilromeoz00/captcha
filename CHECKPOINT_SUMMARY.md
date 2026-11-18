@@ -2,7 +2,7 @@
 
 **CS471 Final Project — Lesson 36 (Ugly but Functional)**
 
-**Repository:** https://github.com/`<your-username>`/`<your-repo>`  ·  **Tag:** `checkpoint`
+**Repository:** https://github.com/lilromeoz00/captcha  ·  **Submitted version:** https://github.com/lilromeoz00/captcha/tree/checkpoint
 
 ## What is complete
 
@@ -43,14 +43,13 @@ section for the Lesson 41 defence.
 
 ## Contributions
 
-**[Teammate]** — test suite (48 tests) and geometry/validation layer with its hard
-1600×400 gate; evaluation reporting (Wilson interval, ceiling decomposition,
-margin tables); CLI annotated output; ran the confidence and penalty ablations.
+**Solo submission.** Jordan Moore is the only team member; every component below was
+authored by him, so the split is 100% / 0%.
 
-**[Jordan Moore]** — problem framing and tactical analysis; captured and curated
-six dataset generations and hand-labelled all grayscale key tiles; trained and
-evaluated the detector; TIDE error decomposition and confidence-floor selection;
-authored the scoring function, abstain policy, and both design documents.
+**Jordan Moore** — problem framing and tactical analysis; capture and curation of six
+dataset generations; hand-labelling of all grayscale key tiles; detector training and
+evaluation; TIDE error decomposition and confidence-floor selection; the scoring
+function, abstain policy and agent loop; the test suite; both design documents.
 
 **Challenges.** Three are worth naming. (1) A model trained at `imgsz=1280` on
 whole frames reported val mAP50 of 0.991 and was useless in production, because

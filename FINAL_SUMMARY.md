@@ -73,18 +73,19 @@ regenerate everything; none requires training.
 
 ## Contributions
 
-**[TEAMMATE NAME]** — test suite (80 tests) and the geometry/validation layer with
-its hard 1600×400 gate; evaluation reporting (Wilson intervals, ceiling
-decomposition, margin tables); CLI annotated output; ran the confidence and penalty
-ablations.
+**Solo submission.** Jordan Moore is the only team member; every component below was
+authored by him, so the split is 100% / 0%. There is no second member to attribute
+work to.
 
-**Jordan Moore** — problem framing and tactical analysis; captured and curated six
-dataset generations and hand-labelled all grayscale key tiles; trained and evaluated
-the detector; TIDE error decomposition and confidence-floor selection; authored the
-scoring function, abstain policy, the experiment harness, and the report.
+**Jordan Moore** — problem framing and tactical analysis; capture and curation of six
+dataset generations; hand-labelling of all grayscale key tiles; detector training and
+evaluation; TIDE error decomposition and confidence-floor selection; the scoring
+function, abstain policy and agent loop; the experiment harness, all six baselines,
+the metrics implementation and the report generator; the test suite (80 tests); both
+design documents.
 
 **AI use disclosure.** The code was developed with the assistance of an AI coding
-assistant, and we can explain and defend every module. The algorithm, measurement
-methodology, and every reported number come from our own data and experiments. The
+assistant, and I can explain and defend every module. The algorithm, measurement
+methodology, and every reported number come from my own data and experiments. The
 report distinguishes measured results from design intent, and §4.4 explicitly reports
-an ablation our data *cannot* identify rather than claiming a fit.
+an ablation my data *cannot* identify rather than claiming a fit.

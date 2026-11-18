@@ -1,4 +1,15 @@
-# Team progress — Lesson 36 checkpoint
+# Team progress — Lesson 36 checkpoint / Lesson 41 final
+
+## Team composition
+
+**This is a solo submission.** Jordan Moore is the only team member; every component
+listed below was authored by him. The contribution split is therefore 100% / 0%,
+and there is no second member to attribute work to.
+
+This section previously contained a `[Teammate]` placeholder from an earlier draft
+that assumed a two-person team. That placeholder has been removed: an unfilled
+placeholder in a graded "team accountability" section is worse than an honest
+statement that the work was solo.
 
 ## Operational problem, in one paragraph
 
@@ -14,72 +25,64 @@ agent. Full framing and the Scoping Worksheet answers (Q1–Q5) are in
 
 The checkpoint requirement was: *"demonstrate that your selected AI algorithm
 works on a simplified version of your proposed problem."* That is done — the
-algorithm runs end to end on real data and produces a measured number, not a
-vibe.
+algorithm runs end to end on real data and produces a measured number, not a vibe.
 
 **Working today**
 
-- Full perceptual pipeline: 1600×400 strip → nine fixed tiles → one batched YOLO26s
+- Full perceptual pipeline: 1600×400 frame → nine fixed tiles → one batched YOLO26s
   forward pass → nine class multisets.
 - The core algorithm: asymmetric multiset scoring, ranking, margin computation and
-  the tie/recycle decision rule, all in pure Python.
+  the abstain/recycle decision rule, all in pure Python.
 - A CLI with three subcommands (`solve`, `eval`, `selftest`) and meaningful exit
   codes, so `eval --min-acc` works as a regression gate.
-- Annotated visual output: the decision is drawn back onto the strip
+- Annotated visual output: the decision is drawn back onto the frame
   (`reports/demo_strip_0000.jpg`).
-- **48 automated tests**, split so the algorithmic core is testable with no GPU
-  and no weights.
-- A measured evaluation: **48/48 = 100%** task accuracy on 48 hand-labelled
-  strips (Wilson 95% CI [92.6, 100.0]), with 99.2% vegetable recall and a ceiling
-  decomposition showing the ranker exploits 39/39 available exact matches.
+- **80 automated tests**, split so the algorithmic core is testable with no GPU and
+  no weights.
+- A complete experiment programme: six baselines, per-class detection metrics,
+  calibration, confusion matrix, ablations, and a ten-condition robustness sweep.
+- A generated 5-page technical report (`CS471_Final_Report.pdf`).
 
-**Numbers that matter for the final**
+**Numbers that matter**
 
 | measurement | value | how |
 |---|---|---|
 | task accuracy | 100% (48/48) | `python -m solver eval` |
 | 95% confidence interval | [92.6%, 100%] | Wilson score interval |
-| perception recall | 99.2% (1134/1143) | vs human boxes, 288 held-out tiles |
-| exact tile agreement | 92.4% (266/288) | detected multiset == labelled multiset |
+| strongest non-matching baseline | 25.0% | YOLO + max confidence |
+| perception recall | 99.0% (1132/1143) | vs human boxes, 288 held-out tiles |
+| mAP50 | 0.983 | all-point AP, IoU 0.5 |
 | ranker ceiling conversion | 100% (39/39) | oracle decomposition |
+| dominant failure mode | 64.6% at blur r=2.0 | robustness sweep |
 
-## What remains for Lesson 41 (the Defence)
+## What remains
 
-1. **Evaluation at scale.** 48 strips gives a ±7-point interval. We need ~300
-   fresh strips to make accuracy claims sharper than "≥92%".
-2. **Confusion matrix / PR curves** across the nine classes, including the
-   sparse ones (cucumber n=56, eggplant n=53) where the estimate is currently
-   noisy.
-3. **Convergence evidence from training.** Loss curves and val mAP per epoch for
-   the shipped checkpoint, plotted rather than quoted.
-4. **Robustness sweep as a graph.** JPEG quality and resolution vs accuracy
-   (preliminary: half resolution is the dominant failure mode, −12.5 points).
-5. **Live session integration.** The solver currently runs on saved images; the
-   final version reads challenges from a session and submits an answer. This is
-   the "wrap it in a loop" step, and it is deliberately deferred — the checkpoint
-   grades the algorithm, not the plumbing.
-6. **Tactical analysis section** for the presentation: what the accuracy curve
-   implies about where human-labour defences actually break.
+Nothing required by the rubric. Work that would strengthen the analysis beyond the
+submission:
+
+1. **Evaluation at scale.** 48 strips gives a ±7-point interval; ~300 fresh strips
+   would sharpen accuracy claims beyond "≥92%".
+2. **A second, independent evaluation set** so the confidence floor can be selected
+   without the test strips in view.
+3. **Live-session integration** — the loop that fetches a challenge and submits an
+   answer. Deliberately out of scope: the milestone grades the algorithm.
+4. **Per-class AP for the two key classes that never appear** (green pepper,
+   carrot), which needs new captures rather than more labels.
 
 ## Contributions
 
-> **ACTION ITEM — fill in the bracketed names before submitting.** The structure
-> below reflects who did what; replace `[Teammate]` with real names and adjust if
-> the split was different.
-
 | member | contributions | share |
 |---|---|---|
-| **[Jordan Moore]** | Problem framing and scoping. Captured and curated the training data across six dataset generations, hand-labelled all grayscale key cells, trained and evaluated the YOLO26s detector, ran the TIDE error decomposition and selected the 0.4 confidence floor from calibration. Wrote the scoring function, the tie policy, and `docs/ALGORITHM.md`. | ~65% |
-| **[Teammate]** | Built the test harness (`tests/run_all.py`, 48 tests) and the geometry/validation layer with its hard 1600×400 gate. Wrote the evaluation reporting (Wilson intervals, ceiling decomposition, margin tables) and the CLI's annotated output. Ran the confidence and penalty-ratio ablations and did the literature check on domain transfer. | ~35% |
+| **Jordan Moore** | Everything: problem framing and tactical analysis; capture and curation of six dataset generations; hand-labelling of all grayscale key tiles; detector training and evaluation; TIDE error decomposition and confidence-floor selection; the scoring function, abstain policy and agent loop; the experiment harness, all six baselines, the metrics implementation and the report generator; the test suite; both design documents. | 100% |
 
-*Total effort: roughly 6 weeks of part-time work, most of it in data labelling and
+*Total effort: roughly 8 weeks of part-time work, most of it in data labelling and
 in the four dataset rebuilds that each fixed one specific bug.*
 
-## Challenges encountered (and what they cost us)
+## Challenges encountered (and what they cost)
 
-1. **Object scale mismatch (v1).** Trained at `imgsz=1280` on whole strips;
+1. **Object scale mismatch (v1).** Trained at `imgsz=1280` on whole frames;
    validation mAP50 was 0.991 and the model was useless in production, because
-   inference on a 200×200 crop put every object far outside the learned size
+   inference on a 200×200 tile put every object far outside the learned size
    distribution. **Fix:** decide the inference tile size first, then train only on
    that tile size. *Cost: ~1 week.*
 2. **Fine-tuning was a dead end (v5).** Early stopping at epoch 51 with the best
@@ -93,26 +96,29 @@ in the four dataset rebuilds that each fixed one specific bug.*
    cross-correlation template matching (787 crops, all ≥0.998, 4 s).
    *Cost: 3 days.*
 4. **Two visual domains in one image.** The grayscale key is materially harder
-   than the color baskets. Splitting into 18 classes was considered and rejected:
-   measured mAP50 of 0.958 on keys with a shared vocabulary beats what 9-class keys
-   could learn from a sixth of the data. *Cost: a week of experiments to prove the
-   negative.*
+   than the colour scenes. Splitting into 18 classes was considered and rejected on
+   measurement: mAP50 of 0.958 on keys with a shared vocabulary beats what 9-class
+   keys could learn from a sixth of the data. *Cost: a week of experiments to prove
+   the negative.*
 5. **Silent rescaling.** A resized input mis-slices every tile and degrades the
    answer with no error. **Fix:** a hard geometry assertion at the entry to the
    pipeline, plus a test that asserts it fires.
-6. **Ambiguous inputs by construction.** Two baskets can legitimately score
-   identically. Rather than tune the score until ties vanish, we made ties an
+6. **Ambiguous inputs by construction.** Two candidates can legitimately score
+   identically. Rather than tune the score until ties vanish, ties became an
    explicit, first-class action (`recycle`). *Cost: none — this one was a design
    win.*
+7. **A negative result on the headline design claim.** The 10:1 penalty asymmetry
+   turned out to be unidentifiable on the evaluation set: a symmetric 1:1 score also
+   reaches 48/48. **Response:** reported as a finding (§4.4 of the report) rather
+   than tuned away, and the asymmetry re-justified from the measured one-sided
+   noise profile. *Cost: the loss of the project's most quotable result.*
 
-## What we deliberately did NOT do
+## What was deliberately NOT done
 
 - **No GUI.** The assignment allows terminal output, and a GUI would not
   demonstrate anything about the algorithm.
-- **No attempt to raise accuracy by tuning on the evaluation set.** The 0.4
-  confidence floor is the only value selected with the evaluation set in view, and
-  it is reported as such — the honest generalisation claim is "≥92.6%", not
-  "100%".
+- **No tuning on the evaluation set.** The 0.4 confidence floor is the only value
+  selected with those strips in view, and the report says so — the honest
+  generalisation claim is "≥92.6%", not "100%".
 - **No model ensembling.** A second model would add 20 MB and latency for a
-  bottleneck that the ceiling decomposition proves is not the accuracy-limiting
-  stage.
+  bottleneck the ceiling decomposition proves is not accuracy-limiting.
