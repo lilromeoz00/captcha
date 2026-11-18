@@ -147,3 +147,20 @@ filename.
 - [`docs/TACTICAL_FRAMING.md`](docs/TACTICAL_FRAMING.md) — responses to worksheet questions 1–5
 - [`PROGRESS.md`](PROGRESS.md) — project status, contributions, issues encountered
 - [`FINAL_SUMMARY.md`](FINAL_SUMMARY.md) — submission summary
+
+## 9. Presentation
+
+`CS471_Presentation.pptx` — 12 slides, 16:9, with speaker notes and timings in the
+PowerPoint notes pane.
+
+```powershell
+python presentation\make_deck.py      # rebuild the deck from the figures
+python presentation\add_notes.py      # re-attach speaker notes
+python presentation\verify_deck.py    # assert no shape leaves the slide
+```
+
+The deck is generated from the same `figures/` and `results/experiments.json` as
+the report, so a slide cannot disagree with a measured value. Slide 6 uses the
+actual annotated output of `strip_0000` and its verbatim terminal text;
+`presentation/BACKUP_DEMO.md` holds the same material for use if the live
+demonstration fails.
