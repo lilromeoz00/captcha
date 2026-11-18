@@ -8,9 +8,9 @@ Produces
 
 The deck is described once as a list of slide specs using absolute inch
 coordinates, then rendered twice: to PPTX via python-pptx, and to PNG via PIL.
-Rendering twice is deliberate -- python-pptx cannot be rasterised on this machine
-(no LibreOffice), so the PNG backend is how the layout gets visually verified.
-Any element that would fall outside the slide is reported as an error.
+Rendering twice is deliberate. python-pptx cannot be rasterised on this machine
+(no LibreOffice or PowerPoint), so the PNG backend is how the layout gets
+visually verified. Any element that would fall outside the slide is reported.
 """
 
 from __future__ import annotations
@@ -76,8 +76,8 @@ def image(x, y, w, h, path):
 def badge(x, y, size, glyph, color):
     """A tick or cross drawn as strokes, not a font glyph.
 
-    Segoe UI has no U+2713/U+2717, so text glyphs render as tofu boxes in both the
-    PPTX and the preview. Drawing the strokes avoids the dependency entirely.
+    Segoe UI has no U+2713 / U+2717, so text glyphs render as tofu boxes in both
+    the PPTX and the preview. Drawing the strokes avoids the dependency.
     """
     return dict(t="badge", x=x, y=y, size=size, glyph=glyph, color=color)
 
@@ -90,29 +90,28 @@ def arrow(x, y, w, h, color=DIM):
 def slide_title():
     return [
         rect(0, 0, W, H, fill=BG, radius=0),
-        # accent bar
         rect(M, 2.30, 0.10, 2.05, fill=ACCENT, radius=0.02),
-        text(M + 0.42, 2.22, 11.0, "CS471  \u00b7  FINAL PROJECT  \u00b7  LESSON 41",
+        text(M + 0.42, 2.22, 11.0, "CS471  FINAL PROJECT  LESSON 41",
              size=12, color=ACCENT, bold=True),
         text(M + 0.42, 2.62, 11.2, "Defeating Adversarial\nVisual Access Control",
              size=50, color=INK, bold=True, line_spacing=1.06),
         text(M + 0.42, 4.52, 10.6,
-             "A convolutional detector and a multiset-matching decision layer\n"
-             "for count-based challenge images",
+             "An object detector and a scoring rule that together pick the right\n"
+             "candidate scene out of eight, on count-based challenge images",
              size=17, color=MUTED, line_spacing=1.35),
         rule(M + 0.42, 5.62, 2.2, color=RULE, lw=1.2),
         text(M + 0.42, 5.82, 6.0, "Jordan Moore", size=15, color=INK, bold=True),
-        text(M + 0.42, 6.22, 8.0, "github.com/lilromeoz00/captcha  \u00b7  tag: final",
+        text(M + 0.42, 6.22, 8.0, "github.com/lilromeoz00/captcha   tag: final",
              size=11.5, color=MUTED, font="mono"),
     ]
 
 
 def slide_problem():
-    stats = [("$2 / 1,000", "cost of a human-solved\nchallenge batch", AMBER),
-             ("~10%", "success rate, because the\nfamily rotates", RED),
-             ("seconds\u2013minutes", "latency per item,\nhuman-bound", MUTED)]
+    stats = [("$2 / 1,000", "what a batch of\nhuman-solved challenges costs", AMBER),
+             ("~10%", "success rate, because the\nchallenge family keeps changing", RED),
+             ("human-paced", "one look per item, so nothing\ntime-sensitive can use it", MUTED)]
     els = header("01", "OPERATIONAL PROBLEM",
-                 "Collection stops at the challenge layer,\nnot at the cipher")
+                 "Every access check costs money\nand a human's time")
     x = M
     for big, cap, col in stats:
         els.append(rect(x, 2.72, 3.62, 1.62, fill=CARD))
@@ -120,65 +119,65 @@ def slide_problem():
         els.append(text(x + 0.30, 3.46, 3.2, cap, size=11.5, color=MUTED, line_spacing=1.28))
         x += 3.86
 
-    els.append(text(M, 4.62, 11.7, "The prevailing commercial solution is manual labour arbitrage: "
-                                    "each challenge is distributed to a low-wage worker.",
+    els.append(text(M, 4.62, 11.7,
+                    "Right now the work gets shipped out. A challenge image goes to a "
+                    "low-wage worker, who answers it for a fraction of a cent.",
                     size=15, color=INK))
     els.append(bullets(M, 5.10, 11.6, [
-        ("Latency", "human-bound, therefore incompatible with time-sensitive collection."),
-        ("Reliability", "approximately 10%, because the challenge family is revised faster than a workforce adapts."),
-        ("Dependency", "an external population that cannot be audited, scaled on demand, or trusted with the target set."),
+        ("Latency.", "A person has to look at it, so it cannot support anything time-sensitive."),
+        ("Reliability.", "About 10%, because the challenge family is revised faster than people adapt."),
+        ("Dependency.", "We rent a workforce we cannot audit, cannot scale on demand, and which "
+                        "sees what we are collecting."),
     ], size=13.5, gap=0.42))
-    els.append(text(M, 6.42, 11.6, "The third deficiency is a security property, not an economic one.",
+    els.append(text(M, 6.42, 11.6,
+                    "That third one is the reason to build this. The cost is an accounting problem. "
+                    "Disclosing the target set is not.",
                     size=13, color=ACCENT, bold=True))
     return els
 
 
 def slide_multiset():
     els = header("02", "PROBLEM FORMULATION",
-                 "The task is multiset matching, not recognition")
+                 "Why a classifier does not\nsolve this")
 
-    # key card
     els.append(rect(M, 2.62, 3.30, 2.05, fill=CARD))
     els.append(text(M + 0.28, 2.80, 2.8, "KEY  (silhouette)", size=10.5, color=ACCENT, bold=True))
-    els.append(text(M + 0.28, 3.14, 2.9, "onion \u00d7 2\npotato \u00d7 2", size=17, color=INK,
+    els.append(text(M + 0.28, 3.14, 2.9, "onion x 2\npotato x 2", size=17, color=INK,
                     line_spacing=1.35))
-    els.append(text(M + 0.28, 4.16, 2.9, "four objects, grayscale render", size=10, color=DIM))
+    els.append(text(M + 0.28, 4.16, 2.9, "four objects, grayscale", size=10, color=DIM))
 
-    # arrow
     els.append(arrow(M + 3.46, 3.44, 0.52, 0.40, color=ACCENT))
 
-    # wrong candidate
     els.append(rect(M + 4.12, 2.62, 3.30, 2.05, fill=CARD, line=RED, lw=1.4))
     els.append(text(M + 4.40, 2.80, 2.8, "SCENE 4", size=10.5, color=RED, bold=True))
-    els.append(text(M + 4.40, 3.14, 2.9, "onion \u00d7 2\npotato \u00d7 1\ncorn \u00d7 1", size=15,
+    els.append(text(M + 4.40, 3.14, 2.9, "onion x 2\npotato x 1\ncorn x 1", size=15,
                     color=INK, line_spacing=1.30))
     els.append(badge(M + 6.62, 2.70, 0.42, "cross", RED))
 
-    # correct candidate
     els.append(rect(M + 7.62, 2.62, 3.30, 2.05, fill=CARD, line=GREEN, lw=1.4))
     els.append(text(M + 7.90, 2.80, 2.8, "SCENE 6", size=10.5, color=GREEN, bold=True))
-    els.append(text(M + 7.90, 3.14, 2.9, "onion \u00d7 2\npotato \u00d7 2", size=17, color=INK,
+    els.append(text(M + 7.90, 3.14, 2.9, "onion x 2\npotato x 2", size=17, color=INK,
                     line_spacing=1.35))
     els.append(badge(M + 10.12, 2.70, 0.42, "tick", GREEN))
 
     els.append(text(M, 4.96, 11.7,
-                    "Every object in scene 4 was detected correctly, and scene 4 is still the "
-                    "wrong answer.", size=15, color=INK, bold=True))
-    els.append(text(M, 5.40, 11.7,
-                    "Accuracy therefore depends on counts per class. A detector with 97% per-object "
-                    "accuracy can be far less accurate at the gate, because error compounds across "
-                    "four objects and eight candidates. This is why the system is built as a scoring "
-                    "rule over detector output rather than as a classifier.", size=13.5, color=MUTED,
+                    "Scene 4 has the right vegetables. It has the wrong number of them.",
+                    size=16, color=INK, bold=True))
+    els.append(text(M, 5.44, 11.7,
+                    "The answer depends on how many of each class are present, not on whether "
+                    "each object was recognised. That difference is the whole project. It also "
+                    "explains why the obvious pipeline, crop each object and classify it, "
+                    "underperforms: we measured 73% for that approach against 83% for a detector "
+                    "that decides about all four objects at once.", size=13.5, color=MUTED,
                     line_spacing=1.34))
     return els
 
 
 def slide_algorithm():
     els = header("03", "ALGORITHM",
-                 "Learned perception, derived decision")
-    # pipeline
-    boxes = [("1600\u00d7400\nframe", "9 fixed tiles"),
-             ("YOLO26s", "200\u00d7200 per tile"),
+                 "One detector, then arithmetic")
+    boxes = [("1600x400\nframe", "9 fixed tiles"),
+             ("YOLO26s", "200x200 per tile"),
              ("9 multisets", "counts per class"),
              ("score", "asymmetric penalty"),
              ("select", "or abstain")]
@@ -195,89 +194,87 @@ def slide_algorithm():
             els.append(arrow(x + bw + 0.03, 3.24, gap - 0.06, 0.18, color=DIM))
         x += bw + gap
 
-    els.append(text(M, 4.24, 11.7, "learned", size=10, color=ACCENT, bold=True))
+    els.append(text(M, 4.24, 11.7, "LEARNED", size=10, color=ACCENT, bold=True))
     els.append(text(M, 4.42, 5.4,
-                    "one batched forward pass over nine tiles; the only\n"
-                    "component that depends on training data",
+                    "One batched forward pass over nine tiles.\n"
+                    "This is the only part that needs training data.",
                     size=11.5, color=MUTED, line_spacing=1.30))
-    els.append(text(M + 6.05, 4.24, 5.6, "derived", size=10, color=GREEN, bold=True))
+    els.append(text(M + 6.05, 4.24, 5.6, "COMPUTED", size=10, color=GREEN, bold=True))
     els.append(text(M + 6.05, 4.42, 5.6,
-                    "closed-form scoring; 8 \u00d7 O(9) integer comparisons\n"
-                    "per frame, no second model",
+                    "A closed-form score. Eight candidates, nine classes,\n"
+                    "so about seventy integer comparisons per frame.",
                     size=11.5, color=MUTED, line_spacing=1.30))
 
-    # formula
     els.append(rect(M, 5.30, 11.73, 1.16, fill="0E1526", line=RULE, lw=1.0))
     els.append(text(M + 0.34, 5.48, 11.0,
-                    "score(K, B) = \u2212( 10 \u00b7 \u03a3 max(0, K[c] \u2212 B[c])  +  "
-                    "1 \u00b7 \u03a3 max(0, B[c] \u2212 K[c]) )",
+                    "score(K, B) = -( 10 * SUM max(0, K[c] - B[c])  +  "
+                    "1 * SUM max(0, B[c] - K[c]) )",
                     size=17, color=INK, font="mono"))
-    els.append(text(M + 2.55, 5.94, 4.0, "\u2191 missed key objects (\u00d710)",
+    els.append(text(M + 2.55, 5.94, 4.0, "^ objects the scene is short of",
                     size=10, color=AMBER, font="mono"))
-    els.append(text(M + 7.35, 5.94, 4.2, "\u2191 surplus objects (\u00d71)",
+    els.append(text(M + 7.35, 5.94, 4.2, "^ objects it has too many of",
                     size=10, color=MUTED, font="mono"))
     els.append(text(M, 6.62, 11.7,
-                    "Because cost is linear in counts, min(K[c], B[c]) per class is exact \u2014 "
-                    "no assignment problem.", size=11.5, color=MUTED))
+                    "Counting is linear, so the number of key objects a scene covers is just "
+                    "min(K, B) per class. Nothing to solve, no Hungarian algorithm.",
+                    size=11.5, color=MUTED))
     return els
 
 
 def slide_decisions():
     els = header("04", "DESIGN",
-                 "Two decisions that carry the system")
+                 "Two choices we had to justify")
 
     els.append(rect(M, 2.46, 5.70, 3.18, fill=CARD))
     els.append(rect(M, 2.46, 0.07, 3.18, fill=ACCENT, radius=0.02))
-    els.append(text(M + 0.38, 2.66, 5.0, "1  \u00b7  Asymmetric penalty", size=16, color=INK, bold=True))
+    els.append(text(M + 0.38, 2.66, 5.0, "1.  Why ten to one", size=16, color=INK, bold=True))
     els.append(text(M + 0.38, 3.08, 5.05,
-                    "Measured detector behaviour: 99.0% recall, 2.1% false-positive leakage. "
-                    "The error is one-sided.", size=12.5, color=MUTED, line_spacing=1.34))
+                    "We measured what the detector actually gets wrong: 99.0% recall against "
+                    "2.1% false positives. The error runs one direction.",
+                    size=12.5, color=MUTED, line_spacing=1.34))
     els.append(text(M + 0.38, 3.96, 5.05,
-                    "A missing object is unrecoverable downstream. A surplus object is noise the "
-                    "score can absorb. Weighting the unrecoverable error ten times higher makes the "
-                    "score approximate a likelihood ratio.", size=12.5, color=MUTED, line_spacing=1.34))
-    els.append(text(M + 0.38, 5.22, 5.05, "justified by mechanism, not by tuning",
+                    "A vegetable we miss is gone. Nothing downstream can recover it. A vegetable "
+                    "we see twice is noise the score can absorb. So the unrecoverable error is "
+                    "priced ten times higher.", size=12.5, color=MUTED, line_spacing=1.34))
+    els.append(text(M + 0.38, 5.22, 5.05, "Justified by how the detector fails, not by tuning.",
                     size=11, color=AMBER, bold=True))
 
     els.append(rect(M + 6.03, 2.46, 5.70, 3.18, fill=CARD))
     els.append(rect(M + 6.03, 2.46, 0.07, 3.18, fill=GREEN, radius=0.02))
-    els.append(text(M + 6.41, 2.66, 5.0, "2  \u00b7  Abstain on a tie", size=16, color=INK, bold=True))
+    els.append(text(M + 6.41, 2.66, 5.0, "2.  Why it refuses to guess", size=16, color=INK,
+                    bold=True))
     els.append(text(M + 6.41, 3.08, 5.05,
-                    "The margin is the gap between the highest and second-highest scores. "
-                    "A margin of zero means two candidates are indistinguishable.",
-                    size=12.5, color=MUTED, line_spacing=1.34))
+                    "The margin is the gap between the top two scores. When it is zero, two "
+                    "scenes fit the key equally well.", size=12.5, color=MUTED, line_spacing=1.34))
     els.append(text(M + 6.41, 4.14, 5.05,
-                    "Because no attempt has been consumed, requesting a new challenge weakly "
-                    "dominates an indeterminate guess. A softmax classifier cannot express this.",
-                    size=12.5, color=MUTED, line_spacing=1.34))
-    els.append(text(M + 6.41, 5.22, 5.05, "enables unattended operation and escalation",
+                    "Nothing has been submitted at that point, so asking for a new challenge "
+                    "costs nothing and a guess has a fifty percent chance of being wrong. "
+                    "Asking again is simply better.", size=12.5, color=MUTED, line_spacing=1.34))
+    els.append(text(M + 6.41, 5.22, 5.05, "This is what lets the thing run unattended.",
                     size=11, color=GREEN, bold=True))
 
     els.append(text(M, 5.92, 11.7,
-                    "The margin is exported, so the system can be run in a precision-oriented mode: "
-                    "high-confidence answers accepted automatically, the remainder escalated.",
-                    size=12.5, color=MUTED))
+                    "The margin also gets written out, so the answer arrives with a confidence "
+                    "attached. High-margin answers can be accepted automatically and the rest "
+                    "sent to a person.", size=12.5, color=MUTED))
     return els
 
 
 def slide_demo():
     els = header("05", "LIVE DEMONSTRATION",
-                 "One frame in, one decision out")
+                 "A run on one frame")
 
-    # The real annotated output at full width. 1600x400 source, so 4:1.
     els.append(rect(M - 0.05, 2.33, 11.83, 3.03, fill="0E1526", line=RULE, lw=1.0))
-    els.append(image(M, 2.38, 11.73, 2.93, os.path.join(HERE, "demo_crop.jpg")))
-    # The source frame is genuinely black to the right of the key tile, so that
-    # region is used for the annotation rather than left empty.
-    els.append(text(M + 3.55, 3.96, 6.6, "WHAT THE FRAME SHOWS", size=9.5,
+    els.append(image(M, 2.38, 11.73, 2.93, os.path.join(HERE, "demo_annotated.jpg")))
+
+    els.append(text(M + 3.55, 3.96, 6.6, "WHAT YOU ARE LOOKING AT", size=9.5,
                     color=ACCENT, bold=True))
     els.append(bullets(M + 3.55, 4.28, 8.0, [
-        "Green border: the selected scene. Cyan border: the key.",
-        "Per-scene score printed on each tile, so the ranking is auditable.",
-        "Basket 4 scores \u22121: one surplus detection, no missed object.",
+        "Green border is the scene it picked. Cyan is the key it read.",
+        "Every scene carries its score, so the ranking can be checked by eye.",
+        "Scene 4 scores minus one: one extra vegetable, none missing.",
     ], size=10.5, gap=0.34))
 
-    # Verbatim terminal output.
     els.append(rect(M, 5.68, 11.73, 1.24, fill="0E1526", line=RULE, lw=1.0))
     els.append(text(M + 0.24, 5.80, 0.55, "PS>", size=9.5, color=ACCENT, bold=True, font="mono"))
     els.append(text(M + 0.78, 5.80, 10.6,
@@ -296,14 +293,16 @@ def slide_demo():
 
 def slide_baselines():
     els = header("06", "QUANTITATIVE RESULTS",
-                 "Six baselines on identical evidence")
+                 "Baseline comparison")
     els.append(rect(M, 2.30, 7.72, 3.62, fill="FFFFFF", radius=0.06))
-    els.append(image(M + 0.16, 2.44, 7.40, 3.34, os.path.join(ROOT, "figures", "fig1_baselines.png")))
+    els.append(image(M + 0.16, 2.44, 7.40, 3.34,
+                     os.path.join(ROOT, "figures", "fig1_baselines.png")))
 
-    els.append(text(M + 8.02, 2.36, 3.75, "Task accuracy, 48 frames", size=10, color=ACCENT, bold=True))
-    rows = [("Random (1/8)", "12.5%", MUTED), ("Always basket 0", "18.8%", MUTED),
-            ("Classical CV", "12.5%", MUTED), ("YOLO + count", "20.8%", MUTED),
-            ("YOLO + confidence", "25.0%", MUTED), ("Full agent, 1:1", "100%", INK),
+    els.append(text(M + 8.02, 2.36, 3.75, "ACCURACY OVER 48 FRAMES", size=10, color=ACCENT,
+                    bold=True))
+    rows = [("Random, 1 in 8", "12.5%", MUTED), ("Always pick scene 0", "18.8%", MUTED),
+            ("Histogram matching", "12.5%", MUTED), ("Detector, most objects", "20.8%", MUTED),
+            ("Detector, most confident", "25.0%", MUTED), ("Full agent, symmetric", "100%", INK),
             ("Full agent", "100%", ACCENT)]
     y = 2.68
     for name, val, col in rows:
@@ -313,23 +312,24 @@ def slide_baselines():
     els.append(rule(M + 8.02, y + 0.02, 3.75, color=RULE, lw=1.0))
 
     els.append(text(M, 6.20, 11.7,
-                    "36 frames corrected and 0 regressed against the strongest baseline lacking a "
-                    "matching stage (McNemar p = 2.9\u00d710\u207b\u00b9\u00b9).", size=12.5, color=INK))
+                    "Against the best baseline that skips the matching step, the agent fixes 36 "
+                    "frames and breaks none. McNemar gives p = 2.9e-11.",
+                    size=12.5, color=INK))
     els.append(text(M, 6.60, 11.7,
-                    "Baselines that disregard the key remain within noise of chance: localisation "
-                    "alone is insufficient without comparison of counts.",
+                    "All six baselines were run on the same cached detections, so the differences "
+                    "come from the decision rule and not from a different model.",
                     size=11.5, color=MUTED))
     return els
 
 
 def slide_perception():
     els = header("07", "QUANTITATIVE RESULTS",
-                 "Perception is not the bottleneck")
+                 "Detector performance")
     els.append(rect(M, 2.42, 5.55, 3.16, fill=CARD))
-    els.append(text(M + 0.32, 2.58, 4.9, "DETECTOR, 288 HELD-OUT TILES", size=10, color=ACCENT, bold=True))
-    rows = [("Recall", "1132 / 1143", "99.0%"), ("Precision", "\u2014", "97.9%"),
-            ("mAP50", "\u2014", "0.983"), ("Calibration error", "\u2014", "0.127"),
-            ("Median IoU", "\u2014", "0.895")]
+    els.append(text(M + 0.32, 2.58, 4.9, "288 HELD-OUT TILES", size=10, color=ACCENT, bold=True))
+    rows = [("Recall", "1132 / 1143", "99.0%"), ("Precision", "", "97.9%"),
+            ("mAP50", "", "0.983"), ("Calibration error", "", "0.127"),
+            ("Median IoU", "", "0.895")]
     y = 2.94
     for a, b, c in rows:
         els.append(text(M + 0.32, y, 2.4, a, size=11.5, color=MUTED))
@@ -338,21 +338,25 @@ def slide_perception():
         y += 0.42
 
     els.append(rect(M + 5.90, 2.42, 5.83, 3.16, fill=CARD))
-    els.append(text(M + 6.22, 2.58, 5.2, "ORACLE CEILING DECOMPOSITION", size=10, color=GREEN, bold=True))
+    els.append(text(M + 6.22, 2.58, 5.2, "WHERE THE ERROR COMES FROM", size=10, color=GREEN,
+                    bold=True))
     els.append(text(M + 6.22, 2.96, 2.2, "39 / 48", size=34, color=MUTED, bold=True))
-    els.append(text(M + 6.22, 3.52, 2.3, "frames contained\na candidate that exactly\nmatched the key",
+    els.append(text(M + 6.22, 3.52, 2.3,
+                    "frames where some scene\nmatched the key exactly",
                     size=10.5, color=DIM, line_spacing=1.28))
     els.append(text(M + 8.72, 2.96, 2.2, "39 / 39", size=34, color=ACCENT, bold=True))
-    els.append(text(M + 8.72, 3.52, 2.6, "of those, selected\ncorrectly by the\nranking stage",
+    els.append(text(M + 8.72, 3.52, 2.6,
+                    "of those, the one it\nactually chose",
                     size=10.5, color=DIM, line_spacing=1.28))
-    els.append(text(M + 6.22, 4.72, 5.2, "The ranking stage converts all available information.",
+    els.append(text(M + 6.22, 4.72, 5.2,
+                    "Given a clean match, it never missed one.",
                     size=11, color=GREEN, bold=True))
 
     els.append(text(M, 5.80, 11.7,
-                    "The nine frames without an exact candidate were still answered correctly by "
-                    "partial scoring, which indicates that the penalty structure orders candidates "
-                    "correctly even when perception is lossy.", size=12, color=MUTED,
-                    line_spacing=1.30))
+                    "The other nine frames had no exact match because the detector lost something "
+                    "on the way in. Partial scoring still answered all nine correctly, which is a "
+                    "better sign than it sounds: the penalty ordering holds up when the input is "
+                    "imperfect.", size=12, color=MUTED, line_spacing=1.30))
     els.append(rule(M, 6.46, 11.7, color=RULE, lw=1.0))
     els.append(text(M, 6.58, 8.0, "48/48 = 100%", size=19, color=INK, bold=True))
     els.append(text(M + 2.75, 6.66, 8.5, "Wilson 95% CI [92.6, 100.0]",
@@ -362,40 +366,41 @@ def slide_perception():
 
 def slide_negative():
     els = header("08", "NEGATIVE RESULT",
-                 "The headline claim does not survive\nthe data", accent=AMBER)
+                 "The ten to one weighting\ncould not be tested here", accent=AMBER)
     els.append(rect(M, 2.60, 5.90, 3.32, fill="FFFFFF", radius=0.06))
     els.append(image(M + 0.18, 2.74, 5.54, 3.04,
                      os.path.join(ROOT, "figures", "fig8_penalty_sweep.png")))
 
     els.append(rect(M + 6.24, 2.60, 5.49, 3.32, fill=CARD))
-    els.append(text(M + 6.56, 2.78, 4.9, "PENALTY RATIO ABLATION", size=10, color=AMBER, bold=True))
+    els.append(text(M + 6.56, 2.78, 4.9, "WHAT WE FOUND", size=10, color=AMBER, bold=True))
     els.append(text(M + 6.56, 3.14, 4.9,
-                    "Accuracy is 48/48 for every ratio from 1:1 to 50:1. A symmetric penalty "
-                    "scores identically.", size=12.5, color=INK, line_spacing=1.34))
+                    "Accuracy sits at 48 out of 48 for every ratio from 1:1 to 50:1. A flat "
+                    "penalty does just as well.", size=12.5, color=INK, line_spacing=1.34))
     els.append(text(M + 6.56, 3.96, 4.9,
-                    "The evaluation set is saturated and cannot distinguish the asymmetric score "
-                    "from a symmetric one. McNemar returns p = 1 with no discordant pairs.",
+                    "Forty-eight frames is not enough to separate the two. Every frame is already "
+                    "answered, so there is nothing left for the weighting to change. McNemar comes "
+                    "back with p = 1 and no discordant pairs.",
                     size=12, color=MUTED, line_spacing=1.34))
-    els.append(text(M + 6.56, 4.94, 4.9, "Reported in \u00a74.4 rather than omitted.",
+    els.append(text(M + 6.56, 5.06, 4.9, "This is in section 4.4 of the report.",
                     size=11, color=AMBER, bold=True))
 
     els.append(text(M, 6.14, 11.7,
-                    "The value 10 is therefore justified by the measured one-sided error "
-                    "distribution and by unit tests that fix the required ordering \u2014 not by a "
-                    "measured optimum. A tuned value would not be defensible.",
-                    size=12.5, color=MUTED, line_spacing=1.34))
+                    "So the number ten rests on the measured error profile and on unit tests that "
+                    "force a miss to rank below a surplus. It does not rest on a measured peak, "
+                    "because this data has no peak to find.", size=12.5, color=MUTED,
+                    line_spacing=1.34))
     return els
 
 
 def slide_failure():
     els = header("09", "FAILURE CASE",
-                 "The binding constraint is the link,\nnot the adversary", accent=RED)
+                 "Bad input is what breaks it", accent=RED)
     els.append(rect(M, 2.60, 7.60, 3.24, fill="FFFFFF", radius=0.06))
     els.append(image(M + 0.16, 2.72, 7.28, 3.00,
                      os.path.join(ROOT, "figures", "fig6_robustness.png")))
 
     els.append(rect(M + 7.92, 2.60, 3.81, 3.24, fill=CARD))
-    els.append(text(M + 8.20, 2.78, 3.3, "DEGRADATION SWEEP", size=10, color=RED, bold=True))
+    els.append(text(M + 8.20, 2.78, 3.3, "ACCURACY UNDER DAMAGE", size=10, color=RED, bold=True))
     rows = [("clean", "48/48", GREEN), ("JPEG q40", "40/48", MUTED),
             ("blur r=1.0", "45/48", MUTED), ("blur r=2.0", "31/48", RED)]
     y = 3.12
@@ -404,36 +409,39 @@ def slide_failure():
         els.append(text(M + 10.30, y, 1.1, b, size=11, color=col, bold=True, align="r"))
         y += 0.40
     els.append(text(M + 8.20, 5.02, 3.3,
-                    "Fixed 200-pixel tiling mis-segments a degraded frame without raising an error.",
+                    "Blur is the expensive one. Compression it tolerates.",
                     size=10.5, color=DIM, line_spacing=1.30))
 
     els.append(text(M, 5.96, 11.7,
-                    "Gaussian blur is the dominant failure mode; recompression is comparatively "
-                    "well tolerated. Because the failure is silent, input quality must be checked "
-                    "before the decision is trusted.", size=11.8, color=MUTED, line_spacing=1.30))
+                    "Blur is the expensive one, and the reason is unglamorous. The pipeline cuts "
+                    "fixed 200-pixel tiles, so a soft frame gets cut in slightly the wrong places "
+                    "and nothing raises an error. The answer just quietly gets worse.",
+                    size=11.8, color=MUTED, line_spacing=1.30))
     els.append(text(M, 6.52, 11.7,
-                    "Implication: link quality and relay compression determine reliability, not "
-                    "the defender's countermeasures.", size=12, color=INK, bold=True))
+                    "In practice, link quality and relay compression decide whether this works. "
+                    "Nothing the defender does matters nearly as much.", size=12, color=INK,
+                    bold=True))
     return els
 
 
 def slide_implications():
     els = header("10", "TACTICAL IMPLICATIONS",
-                 "What the results mean operationally")
+                 "What this changes")
     items = [
-        ("01", "A delay, not a capability",
-         "At $2 per 1,000 items, human latency and 10% reliability, the commercial pipeline is "
-         "confined to bulk collection. Millisecond automation changes the missions the capability "
-         "supports, not only its unit cost."),
-        ("02", "Dependency is the vulnerability",
-         "Renting solvers discloses the target set to a third party. A locally hosted model does "
-         "not. This is the more significant of the two gains."),
-        ("03", "Confidence gating enables autonomy",
-         "Because the margin is exported, the escalation rate is computable before deployment. A "
-         "system that cannot abstain cannot be operated unattended."),
-        ("04", "Labels, not capacity, are the constraint",
-         "Missed detections are negligible. The effective counter is not a harder puzzle but one "
-         "whose rendering changes faster than labels can be collected."),
+        ("01", "It changes what the capability is for",
+         "At two dollars per thousand, human latency and ten percent reliability, this only ever "
+         "suits bulk collection where nobody is waiting. Running in milliseconds opens up uses "
+         "that were never available, which matters more than the cost saving."),
+        ("02", "The dependency was the real risk",
+         "Renting solvers tells a third party what we are collecting. A model on our own machine "
+         "tells them nothing. Of the two improvements, this is the one worth arguing about."),
+        ("03", "Confidence makes it safe to leave running",
+         "The margin is written out, so the escalation rate can be estimated before anything is "
+         "deployed. A system that cannot decline to answer cannot be run unattended."),
+        ("04", "Labels are what limit it",
+         "Missed detections are close to zero, so a bigger model buys almost nothing. What "
+         "defeats a system like this is a challenge whose rendering changes faster than labels "
+         "can be collected for it."),
     ]
     y = 2.52
     for num, head, body in items:
@@ -448,19 +456,20 @@ def slide_implications():
 
 def slide_defence():
     els = header("11", "TECHNICAL DEFENCE",
-                 "Anticipated questions")
+                 "Likely questions")
     qa = [
-        ("Why a detector rather than a classifier?",
-         "Measured 73% \u2192 83% on identical data with less training data, attributed to a "
-         "shared class vocabulary across two visual domains."),
-        ("Why is the penalty asymmetric, if 1:1 also scores 48/48?",
-         "Recall failures are unrecoverable; precision failures are noise. The ratio is not "
-         "identifiable on a saturated set, and \u00a74.4 says so."),
+        ("Why a detector instead of a classifier?",
+         "We measured both. Cropping and classifying scored 73%, joint detection scored 83% on "
+         "the same data with less training. One class vocabulary across both visual domains did "
+         "the work."),
+        ("If 1:1 scores the same, why keep 10:1?",
+         "Because the detector's error is one-sided and that is a property of the detector, not "
+         "of this test set. We could not show it helps here and section 4.4 says so."),
         ("Why abstain rather than guess on a tie?",
-         "A tie is a coin toss. A new challenge costs no attempt, so it weakly dominates."),
-        ("Why report 100% rather than a range?",
-         "The figure is measured against 48 hand-labelled answers with a Wilson interval and an "
-         "error decomposition. The defensible claim is \u2265 92.6% at 95% confidence."),
+         "Nothing has been submitted yet, so a new challenge is free and a guess is a coin flip."),
+        ("Why quote 100% rather than a range?",
+         "It is 48 of 48 against hand-labelled answers, with a Wilson interval and an error "
+         "breakdown. The claim we will defend is at least 92.6% at 95% confidence."),
     ]
     y = 2.44
     for q, a in qa:
@@ -468,13 +477,14 @@ def slide_defence():
         els.append(text(M + 0.30, y - 0.02, 11.2, q, size=12.8, color=INK, bold=True))
         els.append(text(M + 0.30, y + 0.32, 11.2, a, size=11.2, color=MUTED, line_spacing=1.26))
         y += 1.03
-    els.append(text(M, 6.62, 11.7, "Full derivations: docs/ALGORITHM.md  \u00b7  CS471_Final_Report.pdf",
+    els.append(text(M, 6.62, 11.7,
+                    "Longer versions in docs/ALGORITHM.md and CS471_Final_Report.pdf",
                     size=9.5, color=DIM, font="mono"))
     return els
 
 
 def header(num, eyebrow, title, accent=ACCENT):
-    """Standard slide furniture: background, eyebrow, title, accent rule."""
+    """Standard slide furniture: background, section label, title, accent rule."""
     els = [rect(0, 0, W, H, fill=BG, radius=0)]
     els.append(text(M, 0.50, 1.2, num, size=11, color=DIM, bold=True, font="mono"))
     els.append(text(M + 0.56, 0.50, 8.0, eyebrow, size=10.5, color=accent, bold=True))
@@ -487,7 +497,7 @@ def header(num, eyebrow, title, accent=ACCENT):
 
 def footer(n):
     return [
-        text(M, 7.06, 6.0, "CS471  \u00b7  Defeating Adversarial Visual Access Control",
+        text(M, 7.06, 6.0, "CS471   Defeating Adversarial Visual Access Control",
              size=9, color=DIM),
         text(W - M - 0.7, 7.06, 0.7, str(n), size=9, color=DIM, align="r"),
     ]
@@ -508,7 +518,6 @@ def build_slides():
         slide_implications(),
         slide_defence(),
     ]
-    # furniture on every slide after the title
     out = [slides[0]]
     for i, s in enumerate(slides[1:], start=2):
         out.append(s + footer(i))
@@ -522,11 +531,12 @@ def validate(slides):
         for e in els:
             if e["t"] in ("rect", "img"):
                 if e["x"] < -0.01 or e["y"] < -0.01:
-                    problems.append(f"slide {si}: {e['t']} starts off-slide at ({e['x']:.2f},{e['y']:.2f})")
+                    problems.append(
+                        f"slide {si}: {e['t']} starts off-slide at ({e['x']:.2f},{e['y']:.2f})")
                 if e["x"] + e["w"] > W + 0.02 or e["y"] + e["h"] > H + 0.02:
                     problems.append(
                         f"slide {si}: {e['t']} overflows to "
-                        f"({e['x']+e['w']:.2f},{e['y']+e['h']:.2f})")
+                        f"({e['x'] + e['w']:.2f},{e['y'] + e['h']:.2f})")
             if e["t"] == "text" and e["x"] + e["w"] > W + 0.02:
                 problems.append(f"slide {si}: text box overflows right edge")
     return problems
@@ -538,7 +548,7 @@ def render_pptx(slides, path):
     from pptx.dml.color import RGBColor
     from pptx.enum.shapes import MSO_SHAPE
     from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
-    from pptx.util import Emu, Inches, Pt
+    from pptx.util import Inches, Pt
 
     def rgb(h):
         return RGBColor.from_string(h)
@@ -561,7 +571,8 @@ def render_pptx(slides, path):
                     Inches(e["x"]), Inches(e["y"]), Inches(e["w"]), Inches(e["h"]))
                 if e["radius"]:
                     try:
-                        shp.adjustments[0] = min(0.5, e["radius"] / max(0.01, min(e["w"], e["h"])))
+                        shp.adjustments[0] = min(
+                            0.5, e["radius"] / max(0.01, min(e["w"], e["h"])))
                     except Exception:
                         pass
                 shp.fill.solid()
@@ -590,8 +601,6 @@ def render_pptx(slides, path):
                 shp.shadow.inherit = False
 
             elif t == "badge":
-                # Ticks and crosses are drawn as strokes rather than font glyphs,
-                # because Segoe UI has no U+2713 / U+2717 and renders tofu boxes.
                 shp = s.shapes.add_shape(
                     MSO_SHAPE.OVAL, Inches(e["x"]), Inches(e["y"]),
                     Inches(e["size"]), Inches(e["size"]))
@@ -665,7 +674,7 @@ def render_pptx(slides, path):
                     para.space_after = Pt(6)
                     head, body = item if isinstance(item, tuple) else (None, item)
                     dash = para.add_run()
-                    dash.text = "\u2014   "
+                    dash.text = "\u2022   "
                     dash.font.size = Pt(e["size"])
                     dash.font.name = "Segoe UI"
                     dash.font.bold = True
@@ -797,7 +806,7 @@ def render_preview(slides, outdir):
                 y = _px(e["y"])
                 for item in e["items"]:
                     head, body = item if isinstance(item, tuple) else (None, item)
-                    d.text((_px(e["x"]), y), "\u2014", font=fb, fill="#" + e["mark"])
+                    d.text((_px(e["x"]), y), "\u2022", font=fb, fill="#" + e["mark"])
                     cur = _px(e["x"]) + int(0.34 * DPI)
                     if head:
                         d.text((cur, y), head, font=fb, fill="#" + e["color"])

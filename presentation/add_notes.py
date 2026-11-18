@@ -2,9 +2,9 @@
 
     python presentation/add_notes.py
 
-Notes are stored in the PPTX itself (PowerPoint's Notes pane), so the presenter
-has the script in the same file that gets submitted. The backup sheet is a
-separate markdown file for the case where the live machine fails.
+Notes live in the PPTX notes pane, so the script travels with the submitted file.
+Written the way I would actually scribble them: what to say, what to point at,
+and what to skip if time runs out.
 """
 
 from __future__ import annotations
@@ -16,84 +16,108 @@ from pptx import Presentation
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 PPTX = os.path.join(ROOT, "CS471_Presentation.pptx")
-BACKUP = os.path.join(HERE, "BACKUP_DEMO.md")
 
-# One entry per slide, in order. Written to be spoken, not read aloud verbatim.
+# One entry per slide, in order.
 NOTES = [
     # 1 title
-    "0:00  Open with the operational claim, not the technology. One sentence: access to "
-    "defended services is gated by a visual challenge, the commercial answer is rented "
-    "human labour, and this project replaces that with a local computation. "
-    "State the headline result early: 48 of 48 with a defensible lower bound of 92.6%.",
+    "Skip the small talk. Open with the number.\n\n"
+    "\"This is a solver for a count-based image challenge. It gets 48 out of 48 on "
+    "hand-labelled frames, and I'll show where that number stops being trustworthy.\"\n\n"
+    "Then move on. The title slide is not the place to explain anything.",
 
     # 2 problem
-    "0:45  Three numbers carry this slide: $2 per 1,000, about 10% reliable, and "
-    "human latency. Land the third point hard, because it is the one that matters for a "
-    "military use case: the operator rents a population it cannot audit, cannot surge, "
-    "and which learns the target set. That is a security problem, not a cost problem.",
+    "Point at the three cards as you say each number.\n\n"
+    "The first two are the commercial reality: two dollars per thousand, ten percent "
+    "reliable. Nobody argues with those.\n\n"
+    "Spend your time on the third. We are renting people who can see what we are "
+    "collecting. If someone asks why the Air Force would care about a captcha, that "
+    "is the answer, and it has nothing to do with the two dollars.",
 
     # 3 multiset
-    "1:30  This is the slide that establishes the problem is not classification. Read the "
-    "two cards: the key asks for two onions and two potatoes; scene 4 has two onions, one "
-    "potato and one corn. Every object in scene 4 was detected correctly, and scene 4 is "
-    "still wrong. If asked, the measured evidence is 73% for a crop-and-classify pipeline "
-    "versus 83% for joint detection on the same data.",
+    "This slide does one job: prove the task is not classification.\n\n"
+    "Read the two cards out loud. Key wants two onions and two potatoes. Scene 4 has "
+    "two onions, one potato, one corn. Every object in scene 4 was detected. Scene 4 "
+    "is still wrong.\n\n"
+    "If they push back on why we did not just use a classifier: 73% for crop and "
+    "classify, 83% for joint detection, same data, and the detector actually used less "
+    "training data.",
 
     # 4 algorithm
-    "2:15  Walk the pipeline left to right. Emphasise the split: the detector is the only "
-    "learned component, and everything after it is closed-form arithmetic. Then read the "
-    "scoring function and point at the 10 and the 1. Do not over-explain the formula; the "
-    "next slide justifies the asymmetry. Mention that min(K,B) per class is exact, so there "
-    "is no assignment problem to solve.",
+    "Move left to right, do not linger on any box.\n\n"
+    "The one thing to land is the split: everything up to the multisets is learned, "
+    "everything after is arithmetic. That is the answer if anyone asks why this is an "
+    "AI project and not a scripting project.\n\n"
+    "Read the formula once. Point at the 10 and the 1. The next slide explains them, "
+    "so do not defend them yet.",
 
     # 5 design decisions
-    "3:15  Two decisions, each with a justification. Left: the asymmetry is justified by the "
-    "measured error profile, 99.0% recall against 2.1% false-positive leakage, so the error "
-    "is one-sided. Right: abstention. The key argument is that a tie is a coin toss and a new "
-    "challenge costs nothing, so abstaining weakly dominates guessing. Note that a softmax "
-    "cannot express this, which is why the decision layer is separate from the network.",
+    "Two cards, one argument each.\n\n"
+    "Left: we measured how the detector fails. 99% recall, 2% false positives. The "
+    "error only goes one way, so pricing a miss ten times higher follows from that.\n\n"
+    "Right: when the margin is zero, nothing has been submitted yet. Asking for a new "
+    "challenge is free and guessing is a coin flip. That is the whole argument.\n\n"
+    "If asked whether a softmax could do this: no, because a softmax always outputs a "
+    "winner. It has no way to say it does not know.",
 
     # 6 demo
-    "4:00  Run the live command. It takes about two seconds. Point at the green border, then "
-    "at the score printed on each tile, then at the margin on the last line. If the machine "
-    "fails, switch to this slide: the frame shown is the actual output, and the terminal text "
-    "is verbatim. The backup sheet in presentation/BACKUP_DEMO.md has the same material.",
+    "Run it live. Two seconds on CPU.\n\n"
+    "Point at the green border, then the score printed on each tile, then the margin "
+    "on the last line. Do not narrate the terminal output line by line, it is on the "
+    "slide.\n\n"
+    "If it fails, stay on this slide. The frame is the real output and the text is "
+    "verbatim from the same command. Say so and keep going.",
 
     # 7 baselines
-    "5:00  The methodological point first: all six baselines consume identical cached detector "
-    "output, so the differences are attributable to the decision rule. Then read the numbers. "
-    "The two that disregard the key stay at chance, which proves localisation alone is not "
-    "enough. The McNemar result is 36 corrected and 0 regressed, p = 2.9e-11.",
+    "Lead with the method, not the bars.\n\n"
+    "All six baselines ran on the same cached detections. That means the differences "
+    "come from the decision rule, not from one model being better trained. This is the "
+    "part a grader is listening for.\n\n"
+    "Then the two that ignore the key. Twenty percent and twenty-five percent. Knowing "
+    "where the vegetables are does not help if you never compare counts.",
 
     # 8 perception
-    "5:45  Perception is not the bottleneck. Recall 99.0%, mAP50 0.983. Then the ceiling "
-    "decomposition, which is the most important analysis in the project: on 39 of 48 frames "
-    "an exact candidate existed, and the ranker took it 39 times. The remaining nine were "
-    "answered correctly by partial scoring. If asked why this matters, it separates a "
-    "perception failure from a decision failure.",
+    "Two numbers, then the interesting one.\n\n"
+    "Recall 99%, mAP50 0.983. Fine. Nobody will argue.\n\n"
+    "The right-hand card is the point. On 39 frames there was a scene that matched the "
+    "key exactly, and it picked that scene 39 times out of 39. The other nine frames "
+    "had no exact match because the detector lost something, and it still answered all "
+    "nine correctly. That separates a perception failure from a decision failure, and "
+    "it says the decision half is not what is costing us.",
 
     # 9 negative result
-    "6:30  Volunteer this. The 10:1 asymmetry is not identifiable: a symmetric 1:1 penalty "
-    "also scores 48 of 48, so McNemar returns p = 1. The set is saturated. The honest position "
-    "is that 10 is justified by mechanism and by unit tests, not by a measured optimum. "
-    "Expect a question here; answering it well is worth more than the result itself.",
+    "Bring this up yourself. Do not wait to be caught.\n\n"
+    "A flat 1:1 penalty also scores 48 out of 48. Every frame is already answered, so "
+    "the weighting has nothing left to change. Forty-eight frames cannot separate the "
+    "two, and McNemar says p equals one.\n\n"
+    "The honest line: ten is justified by how the detector fails and by unit tests that "
+    "force a miss to rank below a surplus. It is not justified by a measured optimum, "
+    "because this data has none.\n\n"
+    "If someone asks whether that undermines the design, say no, it bounds the claim. "
+    "We know what we showed and what we did not.",
 
     # 10 failure
-    "7:15  The dominant failure is blur, not adversarial imagery. At radius 2.0 accuracy falls "
-    "to 31 of 48, because fixed tiling mis-segments a degraded frame silently. Recompression is "
-    "tolerated comparatively well. Operational reading: link quality and relay compression "
-    "determine reliability, which tells you where engineering effort should go.",
+    "Blur, not adversarial imagery.\n\n"
+    "Radius 2.0 drops it to 31 out of 48. The reason is boring: the pipeline cuts fixed "
+    "200-pixel tiles, so a soft frame gets cut in the wrong places and nothing throws "
+    "an error. The answer just gets quietly worse.\n\n"
+    "Compression it handles fine. So the practical constraint is the link, not the "
+    "defender. That is where the next engineer should spend their time.",
 
     # 11 implications
-    "8:00  Four points, one sentence each. Do not rush the fourth: the measured constraint is "
-    "labels, not capacity, so the effective counter to a system like this is a puzzle whose "
-    "rendering changes faster than labels can be collected. That is the finding worth briefing.",
+    "One sentence per row. Do not read the paragraphs.\n\n"
+    "Rows one and two are why this matters. Rows three and four are what we would do "
+    "next.\n\n"
+    "The fourth row is the one worth remembering: missed detections are essentially "
+    "zero, so the limit is labels. The answer to this system is not a harder puzzle, "
+    "it is one whose rendering changes faster than labels can be collected.",
 
     # 12 defence
-    "8:45  Hold this slide in reserve for questions rather than presenting it. The four answers "
-    "cover the most likely challenges. If time is short, skip to the closing line: the algorithm "
-    "is correct and measured, and the one design claim the data do not support is reported "
-    "rather than hidden.",
+    "Hold this slide back. Only show it if the questions start and you want to steer "
+    "them.\n\n"
+    "The four answers cover what has actually been asked. Section 4.4 of the report has "
+    "the longer version of the second one if it turns into an argument.\n\n"
+    "Closing line if you need one: the algorithm works and is measured, and the one "
+    "claim the data does not support is written down in the report rather than left out.",
 ]
 
 
@@ -107,13 +131,8 @@ def main():
         slide.notes_slide.notes_text_frame.text = note
 
     prs.save(PPTX)
-    print(f"added speaker notes to {n} slides")
-
-    total = 0
-    for note in NOTES:
-        # crude word count of the spoken guidance
-        total += len(note.split())
-    print(f"notes total ~{total} words; the timings assume 5-7 minutes of speech")
+    words = sum(len(x.split()) for x in NOTES)
+    print(f"added speaker notes to {n} slides (~{words} words)")
 
 
 if __name__ == "__main__":
